@@ -75,3 +75,11 @@ Utilise ce journal pour garder la trace des choix importants.
 - Decision retenue: Profil public => follow direct. Profil prive => request pending puis accept/decline.
 - Pourquoi: Repond exactement aux exigences du sujet et facilite les tests multi navigateurs.
 - Impact: Endpoints dedies /api/follows/* et /api/profile/view avec controle d acces.
+
+## D-009 - Privacy des posts et pieces jointes media
+- Date: 2026-03-18
+- Contexte: Les lignes AQ-POST imposent creation de posts/commentaires, media image/gif et regles de visibilite fines.
+- Options considerees: 1) filtrage uniquement SQL 2) controle applicatif centralise par regle de privacy.
+- Decision retenue: Controle applicatif centralise avec 3 modes (public, almost_private, private) + table post_allowed_users pour le mode private.
+- Pourquoi: Plus lisible, plus facile a auditer et a faire evoluer avec les regles followers deja en place.
+- Impact: Nouveaux endpoints /api/posts* ; UI feed/commentaires ; private restreint aux followers selectionnes.

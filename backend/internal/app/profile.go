@@ -18,7 +18,7 @@ type myProfileResponse struct {
 	Stats     profileStats `json:"stats"`
 	Followers []userCard   `json:"followers"`
 	Following []userCard   `json:"following"`
-	Posts     []any        `json:"posts"`
+	Posts     []postItem   `json:"posts"`
 }
 
 type visibilityRequest struct {
@@ -59,12 +59,18 @@ func (a *App) handleMyProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	posts, err := a.loadVisiblePosts(r, user.ID, &user.ID)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to load posts")
+		return
+	}
+
 	writeJSON(w, http.StatusOK, myProfileResponse{
 		User:      user,
 		Stats:     stats,
 		Followers: followers,
 		Following: following,
-		Posts:     []any{},
+		Posts:     posts,
 	})
 }
 
@@ -128,12 +134,18 @@ func (a *App) handleViewProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	posts, err := a.loadVisiblePosts(r, viewer.ID, &targetUser.ID)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to load posts")
+		return
+	}
+
 	writeJSON(w, http.StatusOK, myProfileResponse{
 		User:      targetUser,
 		Stats:     stats,
 		Followers: followers,
 		Following: following,
-		Posts:     []any{},
+		Posts:     posts,
 	})
 }
 

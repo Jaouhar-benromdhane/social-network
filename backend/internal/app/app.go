@@ -43,6 +43,12 @@ func New(db *sql.DB, cfg Config) (*App, error) {
 	if err := os.MkdirAll(filepath.Join(uploadDir, "avatars"), 0o755); err != nil {
 		return nil, err
 	}
+	if err := os.MkdirAll(filepath.Join(uploadDir, "posts"), 0o755); err != nil {
+		return nil, err
+	}
+	if err := os.MkdirAll(filepath.Join(uploadDir, "comments"), 0o755); err != nil {
+		return nil, err
+	}
 
 	return &App{
 		db:              db,
@@ -67,6 +73,9 @@ func (a *App) Routes() http.Handler {
 	mux.HandleFunc("/api/profile/me", a.handleMyProfile)
 	mux.HandleFunc("/api/profile/view", a.handleViewProfile)
 	mux.HandleFunc("/api/profile/me/visibility", a.handlePatchProfileVisibility)
+	mux.HandleFunc("/api/posts", a.handleCreatePost)
+	mux.HandleFunc("/api/posts/feed", a.handleFeedPosts)
+	mux.HandleFunc("/api/posts/comments", a.handleCreateComment)
 	mux.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir(a.uploadDir))))
 	return withCORS(mux)
 }

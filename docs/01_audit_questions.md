@@ -66,7 +66,7 @@ Conseil de remplissage:
 | ID | Question (copie audit) | Reponse | Preuve | Statut |
 |---|---|---|---|---|
 | AQ-PROF-001 | Try opening your own profile. Does the profile displays every information requested in the register form, apart from the password? | Oui pour les donnees profil exposees (sans mot de passe). | /api/profile/me ; frontend/src/App.vue | READY |
-| AQ-PROF-002 | Try opening your own profile. Does the profile displays every post created by the user? | TODO | TODO | TODO |
+| AQ-PROF-002 | Try opening your own profile. Does the profile displays every post created by the user? | Oui, /api/profile/me retourne les posts du proprietaire selon les 3 niveaux de privacy. | test PROFILE2_HAS_A=1 PROFILE2_HAS_B=1 PROFILE2_HAS_C=1 (script profile_posts_check2) | VALIDATED |
 | AQ-PROF-003 | Try opening your own profile. Does the profile displays the users that you follow and the ones who are following you? | Oui, le profil retourne les listes followers/following. | /api/profile/me ; /api/follows ; frontend/src/App.vue | VALIDATED |
 | AQ-PROF-004 | Try opening your own profile. Are you able to change between private profile and public profile? | Oui, endpoint de mise a jour visibilite operationnel. | test PATCH_VISIBILITY sur /api/profile/me/visibility | VALIDATED |
 | AQ-PROF-005 | Open two browsers and log in with different users on them, with one of the users having a private profile and successfully follow that user. Are you able to see a followed user private profile? | Oui, acces autorise apres acceptation de follow request. | test VIEW_E_PRIVATE_FOLLOWED (200) sur /api/profile/view | VALIDATED |
@@ -77,11 +77,11 @@ Conseil de remplissage:
 ## Posts
 | ID | Question (copie audit) | Reponse | Preuve | Statut |
 |---|---|---|---|---|
-| AQ-POST-001 | Are you able to create a post and comment on already existing posts after logging in? | TODO | TODO | TODO |
-| AQ-POST-002 | Try creating a post. Are you able to include an image (JPG or PNG) or a GIF on it? | TODO | TODO | TODO |
-| AQ-POST-003 | Try creating a comment. Are you able to include an image (JPG or PNG) or a GIF on it? | TODO | TODO | TODO |
-| AQ-POST-004 | Try creating a post. Can you specify the type of privacy of the post (public, almost private, private)? | TODO | TODO | TODO |
-| AQ-POST-005 | If you choose the private privacy option, can you specify the users that are allowed to see the post? | TODO | TODO | TODO |
+| AQ-POST-001 | Are you able to create a post and comment on already existing posts after logging in? | Oui, creation de post puis commentaire sur post existant apres login. | COMMENT_CODE=201 et U1_SEES_COMMENT=1 (script test_posts_e2e_fixed) | VALIDATED |
+| AQ-POST-002 | Try creating a post. Are you able to include an image (JPG or PNG) or a GIF on it? | Oui, upload image sur post valide. | POST_PUBLIC_HAS_IMAGE=1 (script test_posts_e2e_fixed) | VALIDATED |
+| AQ-POST-003 | Try creating a comment. Are you able to include an image (JPG or PNG) or a GIF on it? | Oui, upload GIF sur commentaire valide. | COMMENT_HAS_GIF=1 (script test_posts_e2e_fixed) | VALIDATED |
+| AQ-POST-004 | Try creating a post. Can you specify the type of privacy of the post (public, almost private, private)? | Oui, les 3 niveaux sont pris en charge. | POST_ALMOST_PRIVACY=1 + visibilite feed U1/U2 (script test_posts_e2e_fixed) | VALIDATED |
+| AQ-POST-005 | If you choose the private privacy option, can you specify the users that are allowed to see the post? | Oui, selection de followers autorises seulement, et controle d acces applique. | POST_PRIVATE_HAS_ALLOWED=1 ; U1_VISIBLE_PRIVATE=1 ; U2_VISIBLE_PRIVATE=0 ; PRIVATE_BAD_CODE=400 | VALIDATED |
 
 ## Groups
 | ID | Question (copie audit) | Reponse | Preuve | Statut |

@@ -57,3 +57,11 @@
 - Blocages: Aucun blocage technique majeur.
 - Prochaine etape: Implementer posts/commentaires + privacy public/almost/private.
 - Questions pour le prof: Aucune.
+
+## Session 2026-03-18 (M3 posts + privacy done)
+- Date: 2026-03-18
+- Objectif de session: Implementer posts/commentaires avec media + privacy mandatory et valider les lignes AQ-POST.
+- Travail fait: Endpoints /api/posts, /api/posts/feed, /api/posts/comments ajoutes avec controle privacy (public/almost_private/private), selection followers autorises pour private, upload JPEG/PNG/GIF pour posts/commentaires, affichage feed + commentaires + formulaire de post/comment dans frontend, profil enrichi avec posts visibles.
+- Blocages: Ajustement du script de test pour extraire correctement les IDs JSON (la logique applicative etait correcte).
+- Prochaine etape: Demarrer M4 (groupes + invitations + demandes + events).
+- Questions pour le prof: Aucune.
