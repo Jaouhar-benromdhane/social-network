@@ -128,6 +128,28 @@
           <p><strong>Posts:</strong> {{ profile?.posts?.length ?? 0 }}</p>
         </div>
 
+        <div class="connections">
+          <article class="connection-block">
+            <h3>Followers</h3>
+            <ul v-if="profile?.followers?.length" class="mini-list">
+              <li v-for="follower in profile.followers" :key="follower.id">
+                {{ follower.first_name }} {{ follower.last_name }}
+              </li>
+            </ul>
+            <p v-else class="muted">No followers yet.</p>
+          </article>
+
+          <article class="connection-block">
+            <h3>Following</h3>
+            <ul v-if="profile?.following?.length" class="mini-list">
+              <li v-for="followed in profile.following" :key="followed.id">
+                {{ followed.first_name }} {{ followed.last_name }}
+              </li>
+            </ul>
+            <p v-else class="muted">You are not following anyone yet.</p>
+          </article>
+        </div>
+
         <p v-if="me.about_me" class="about">{{ me.about_me }}</p>
 
         <div class="actions">
@@ -141,6 +163,80 @@
           <button type="button" @click="updateVisibility" :disabled="loading">Update visibility</button>
           <button type="button" class="secondary" @click="logout" :disabled="loading">Logout</button>
         </div>
+
+        <section class="network">
+          <h3>Discover users</h3>
+          <p class="muted">Use this section to test follow requests, auto-follow public profiles, accept or decline requests, and unfollow.</p>
+
+          <ul v-if="networkUsers.length" class="user-list">
+            <li v-for="user in networkUsers" :key="user.id" class="user-item">
+              <div>
+                <strong>{{ user.first_name }} {{ user.last_name }}</strong>
+                <p class="muted small">{{ user.email }} | {{ user.profile_visibility }}</p>
+              </div>
+
+              <div class="user-actions">
+                <span v-if="user.is_self" class="pill">You</span>
+                <span v-else-if="user.is_following" class="pill success">Following</span>
+                <span v-else-if="user.request_status === 'pending'" class="pill pending">Request pending</span>
+
+                <button
+                  v-if="!user.is_self && !user.is_following && user.request_status !== 'pending'"
+                  type="button"
+                  class="tiny"
+                  @click="sendFollowRequest(user.id)"
+                >
+                  {{ user.profile_visibility === 'private' ? 'Send follow request' : 'Follow' }}
+                </button>
+
+                <button
+                  v-if="!user.is_self && user.is_following"
+                  type="button"
+                  class="tiny secondary"
+                  @click="unfollowUser(user.id)"
+                >
+                  Unfollow
+                </button>
+              </div>
+            </li>
+          </ul>
+          <p v-else class="muted">No users available yet.</p>
+        </section>
+
+        <section class="network">
+          <h3>Incoming follow requests</h3>
+
+          <ul v-if="incomingRequests.length" class="user-list">
+            <li v-for="request in incomingRequests" :key="request.id" class="user-item">
+              <div>
+                <strong>{{ request.requester.first_name }} {{ request.requester.last_name }}</strong>
+                <p class="muted small">{{ request.requester.email }}</p>
+              </div>
+
+              <div class="user-actions">
+                <button type="button" class="tiny" @click="respondFollowRequest(request.id, 'accept')">Accept</button>
+                <button type="button" class="tiny secondary" @click="respondFollowRequest(request.id, 'decline')">Decline</button>
+              </div>
+            </li>
+          </ul>
+          <p v-else class="muted">No pending requests.</p>
+        </section>
+
+        <section class="network">
+          <h3>Profile visibility check</h3>
+          <p class="muted">Paste a user ID and test private/public profile access.</p>
+
+          <div class="inline-form">
+            <input v-model="profileViewUserID" type="text" placeholder="Target user id" />
+            <button type="button" class="tiny" @click="viewOtherProfile">View profile</button>
+          </div>
+
+          <p v-if="profileViewError" class="error">{{ profileViewError }}</p>
+          <p v-if="profileViewResult" class="muted">
+            Profile visible: {{ profileViewResult.user.first_name }} {{ profileViewResult.user.last_name }}
+            ({{ profileViewResult.user.profile_visibility }})
+          </p>
+        </section>
 
         <p v-if="authError" class="error">{{ authError }}</p>
       </template>
@@ -159,6 +255,11 @@ const mode = ref("login");
 const me = ref(null);
 const profile = ref(null);
 const visibility = ref("public");
+const networkUsers = ref([]);
+const incomingRequests = ref([]);
+const profileViewUserID = ref("");
+const profileViewResult = ref(null);
+const profileViewError = ref("");
 
 const loginForm = reactive({
   email: "",
@@ -210,6 +311,8 @@ async function loadCurrentUser() {
     if (response.status === 401) {
       me.value = null;
       profile.value = null;
+      networkUsers.value = [];
+      incomingRequests.value = [];
       return;
     }
 
@@ -223,6 +326,7 @@ async function loadCurrentUser() {
     me.value = payload.user;
     visibility.value = payload.user.profile_visibility;
     await loadMyProfile();
+    await loadNetworkData();
   } catch (_err) {
     authError.value = "Unable to reach authentication service.";
   }
@@ -271,6 +375,7 @@ async function submitLogin() {
     visibility.value = payload.user.profile_visibility;
     loginForm.password = "";
     await loadMyProfile();
+    await loadNetworkData();
   } catch (_err) {
     authError.value = "Login request failed.";
   } finally {
@@ -316,6 +421,7 @@ async function submitRegister() {
     me.value = payload.user;
     visibility.value = payload.user.profile_visibility;
     await loadMyProfile();
+    await loadNetworkData();
   } catch (_err) {
     authError.value = "Registration request failed.";
   } finally {
@@ -357,6 +463,150 @@ async function updateVisibility() {
   }
 }
 
+async function loadNetworkData() {
+  if (!me.value) {
+    networkUsers.value = [];
+    incomingRequests.value = [];
+    return;
+  }
+
+  try {
+    const [usersRes, requestsRes] = await Promise.all([
+      fetch("/api/users", { credentials: "include" }),
+      fetch("/api/follows/requests/incoming", { credentials: "include" }),
+    ]);
+
+    if (usersRes.ok) {
+      const usersPayload = await usersRes.json();
+      networkUsers.value = usersPayload.users || [];
+    }
+
+    if (requestsRes.ok) {
+      const requestsPayload = await requestsRes.json();
+      incomingRequests.value = requestsPayload.requests || [];
+    }
+  } catch (_err) {
+    // Leave existing data as-is to avoid disruptive UI flicker.
+  }
+}
+
+async function sendFollowRequest(targetUserID) {
+  loading.value = true;
+  authError.value = "";
+
+  try {
+    const response = await fetch("/api/follows/request", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({ target_user_id: targetUserID }),
+    });
+
+    const payload = await response.json();
+    if (!response.ok) {
+      authError.value = payload.error || "Unable to follow this user.";
+      return;
+    }
+
+    await loadMyProfile();
+    await loadNetworkData();
+  } catch (_err) {
+    authError.value = "Follow request failed.";
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function unfollowUser(targetUserID) {
+  loading.value = true;
+  authError.value = "";
+
+  try {
+    const response = await fetch("/api/follows/unfollow", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({ target_user_id: targetUserID }),
+    });
+
+    const payload = await response.json();
+    if (!response.ok) {
+      authError.value = payload.error || "Unable to unfollow user.";
+      return;
+    }
+
+    await loadMyProfile();
+    await loadNetworkData();
+  } catch (_err) {
+    authError.value = "Unfollow request failed.";
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function respondFollowRequest(requestID, action) {
+  loading.value = true;
+  authError.value = "";
+
+  try {
+    const response = await fetch("/api/follows/requests/respond", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({
+        request_id: requestID,
+        action,
+      }),
+    });
+
+    const payload = await response.json();
+    if (!response.ok) {
+      authError.value = payload.error || "Unable to process follow request.";
+      return;
+    }
+
+    await loadMyProfile();
+    await loadNetworkData();
+  } catch (_err) {
+    authError.value = "Failed to respond to request.";
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function viewOtherProfile() {
+  profileViewError.value = "";
+  profileViewResult.value = null;
+
+  const userID = profileViewUserID.value.trim();
+  if (!userID) {
+    profileViewError.value = "Please provide a user id.";
+    return;
+  }
+
+  try {
+    const response = await fetch(`/api/profile/view?user_id=${encodeURIComponent(userID)}`, {
+      credentials: "include",
+    });
+
+    const payload = await response.json();
+    if (!response.ok) {
+      profileViewError.value = payload.error || "Unable to view target profile.";
+      return;
+    }
+
+    profileViewResult.value = payload;
+  } catch (_err) {
+    profileViewError.value = "Profile lookup failed.";
+  }
+}
+
 async function logout() {
   loading.value = true;
   authError.value = "";
@@ -369,6 +619,11 @@ async function logout() {
   } finally {
     me.value = null;
     profile.value = null;
+    networkUsers.value = [];
+    incomingRequests.value = [];
+    profileViewUserID.value = "";
+    profileViewResult.value = null;
+    profileViewError.value = "";
     loading.value = false;
     loginForm.password = "";
   }

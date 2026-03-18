@@ -161,6 +161,34 @@ button.secondary {
   color: #31435f;
 }
 
+.connections {
+  margin-top: 14px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.connection-block {
+  border: 1px solid #d6e0ef;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.connection-block h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+
+.mini-list {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.mini-list li {
+  margin: 4px 0;
+  color: #334762;
+}
+
 .about {
   margin-top: 14px;
   padding: 10px 12px;
@@ -179,6 +207,83 @@ button.secondary {
 .actions label {
   display: grid;
   gap: 6px;
+}
+
+.network {
+  margin-top: 18px;
+  border-top: 1px solid #dce5f3;
+  padding-top: 14px;
+}
+
+.network h3 {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+}
+
+.muted {
+  color: #4f607b;
+  margin: 0;
+}
+
+.small {
+  font-size: 0.86rem;
+}
+
+.user-list {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.user-item {
+  border: 1px solid #d5dfed;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.user-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.tiny {
+  padding: 7px 10px;
+  font-size: 0.86rem;
+}
+
+.pill {
+  background: #e5edf9;
+  color: #2f5fa8;
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.pill.success {
+  background: #ddf4e3;
+  color: #17723a;
+}
+
+.pill.pending {
+  background: #fff1d9;
+  color: #9b650b;
+}
+
+.inline-form {
+  margin-top: 10px;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr auto;
+  align-items: center;
 }
 
 .status-row {

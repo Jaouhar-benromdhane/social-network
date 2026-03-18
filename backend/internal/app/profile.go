@@ -1,7 +1,9 @@
 package app
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strings"
 )
@@ -12,9 +14,11 @@ type profileStats struct {
 }
 
 type myProfileResponse struct {
-	User  User         `json:"user"`
-	Stats profileStats `json:"stats"`
-	Posts []any        `json:"posts"`
+	User      User         `json:"user"`
+	Stats     profileStats `json:"stats"`
+	Followers []userCard   `json:"followers"`
+	Following []userCard   `json:"following"`
+	Posts     []any        `json:"posts"`
 }
 
 type visibilityRequest struct {
@@ -43,10 +47,93 @@ func (a *App) handleMyProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	followers, err := a.loadFollowers(r, user.ID)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to load followers")
+		return
+	}
+
+	following, err := a.loadFollowing(r, user.ID)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to load following")
+		return
+	}
+
 	writeJSON(w, http.StatusOK, myProfileResponse{
-		User:  user,
-		Stats: stats,
-		Posts: []any{},
+		User:      user,
+		Stats:     stats,
+		Followers: followers,
+		Following: following,
+		Posts:     []any{},
+	})
+}
+
+func (a *App) handleViewProfile(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		methodNotAllowed(w)
+		return
+	}
+
+	viewer, err := a.userFromRequest(r.Context(), r)
+	if err != nil {
+		if isUnauthorizedError(err) {
+			writeError(w, http.StatusUnauthorized, "unauthorized")
+			return
+		}
+		writeError(w, http.StatusInternalServerError, "failed to load current user")
+		return
+	}
+
+	targetID := strings.TrimSpace(r.URL.Query().Get("user_id"))
+	if targetID == "" {
+		writeError(w, http.StatusBadRequest, "user_id query parameter is required")
+		return
+	}
+
+	targetUser, err := a.getUserByID(r.Context(), targetID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			writeError(w, http.StatusNotFound, "user not found")
+			return
+		}
+		writeError(w, http.StatusInternalServerError, "failed to load target user")
+		return
+	}
+
+	canView, err := a.canViewUserProfile(r, viewer.ID, targetUser.ID, targetUser.ProfileVisibility)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to check profile permissions")
+		return
+	}
+	if !canView {
+		writeError(w, http.StatusForbidden, "private profile: follow this user to see details")
+		return
+	}
+
+	stats, err := a.loadProfileStats(r, targetUser.ID)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to load profile stats")
+		return
+	}
+
+	followers, err := a.loadFollowers(r, targetUser.ID)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to load followers")
+		return
+	}
+
+	following, err := a.loadFollowing(r, targetUser.ID)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to load following")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, myProfileResponse{
+		User:      targetUser,
+		Stats:     stats,
+		Followers: followers,
+		Following: following,
+		Posts:     []any{},
 	})
 }
 

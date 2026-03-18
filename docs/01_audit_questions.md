@@ -57,22 +57,22 @@ Conseil de remplissage:
 ## Followers
 | ID | Question (copie audit) | Reponse | Preuve | Statut |
 |---|---|---|---|---|
-| AQ-FOL-001 | Try to follow a private user. Are you able to send a following request to the private user? | TODO | TODO | TODO |
-| AQ-FOL-002 | Try to follow a public user. Are you able to follow the public user without the need of sending a following request? | TODO | TODO | TODO |
-| AQ-FOL-003 | Open two browsers (ex: Chrome and Firefox), log in as two different private users and with one of them try to follow the other. Is the user who received the request able to accept or decline the following request? | TODO | TODO | TODO |
-| AQ-FOL-004 | After following another user successfully try to unfollow him. Were you able to do so? | TODO | TODO | TODO |
+| AQ-FOL-001 | Try to follow a private user. Are you able to send a following request to the private user? | Oui, demande de follow private creee avec statut pending. | test REQUEST_E / REQUEST_G sur /api/follows/request | VALIDATED |
+| AQ-FOL-002 | Try to follow a public user. Are you able to follow the public user without the need of sending a following request? | Oui, auto-follow direct sans phase request (auto_followed=true). | test A_FOLLOW_H_PUBLIC sur /api/follows/request | VALIDATED |
+| AQ-FOL-003 | Open two browsers (ex: Chrome and Firefox), log in as two different private users and with one of them try to follow the other. Is the user who received the request able to accept or decline the following request? | Oui, accept et decline fonctionnent depuis la boite de demandes entrantes. | tests E_ACCEPT et G_DECLINE sur /api/follows/requests/respond | VALIDATED |
+| AQ-FOL-004 | After following another user successfully try to unfollow him. Were you able to do so? | Oui, unfollow supprime la relation (deleted=true). | test UNFOLLOW_E sur /api/follows/unfollow | VALIDATED |
 
 ## Profile
 | ID | Question (copie audit) | Reponse | Preuve | Statut |
 |---|---|---|---|---|
 | AQ-PROF-001 | Try opening your own profile. Does the profile displays every information requested in the register form, apart from the password? | Oui pour les donnees profil exposees (sans mot de passe). | /api/profile/me ; frontend/src/App.vue | READY |
 | AQ-PROF-002 | Try opening your own profile. Does the profile displays every post created by the user? | TODO | TODO | TODO |
-| AQ-PROF-003 | Try opening your own profile. Does the profile displays the users that you follow and the ones who are following you? | TODO | TODO | TODO |
+| AQ-PROF-003 | Try opening your own profile. Does the profile displays the users that you follow and the ones who are following you? | Oui, le profil retourne les listes followers/following. | /api/profile/me ; /api/follows ; frontend/src/App.vue | VALIDATED |
 | AQ-PROF-004 | Try opening your own profile. Are you able to change between private profile and public profile? | Oui, endpoint de mise a jour visibilite operationnel. | test PATCH_VISIBILITY sur /api/profile/me/visibility | VALIDATED |
-| AQ-PROF-005 | Open two browsers and log in with different users on them, with one of the users having a private profile and successfully follow that user. Are you able to see a followed user private profile? | TODO | TODO | TODO |
-| AQ-PROF-006 | Using the two browsers with the same users, with one of the users having a private profile and be sure not to follow him. Are you prevented from seeing a non-followed user private profile? | TODO | TODO | TODO |
-| AQ-PROF-007 | Using the two browsers with the users, with one of the users having a public profile and be sure not to follow him. Are you able to see a non-followed user public profile? | TODO | TODO | TODO |
-| AQ-PROF-008 | Using the two browsers with the users, with one of the users having a public profile and successfully follow that user. Are you able to see a followed user public profile? | TODO | TODO | TODO |
+| AQ-PROF-005 | Open two browsers and log in with different users on them, with one of the users having a private profile and successfully follow that user. Are you able to see a followed user private profile? | Oui, acces autorise apres acceptation de follow request. | test VIEW_E_PRIVATE_FOLLOWED (200) sur /api/profile/view | VALIDATED |
+| AQ-PROF-006 | Using the two browsers with the same users, with one of the users having a private profile and be sure not to follow him. Are you prevented from seeing a non-followed user private profile? | Oui, acces refuse tant que non-follow (403). | test VIEW_E_PRIVATE_NOT_FOLLOWED (403) sur /api/profile/view | VALIDATED |
+| AQ-PROF-007 | Using the two browsers with the users, with one of the users having a public profile and be sure not to follow him. Are you able to see a non-followed user public profile? | Oui, acces autorise sur profil public meme sans follow. | test VIEW_I_PUBLIC_WITHOUT_FOLLOW (200) sur /api/profile/view | VALIDATED |
+| AQ-PROF-008 | Using the two browsers with the users, with one of the users having a public profile and successfully follow that user. Are you able to see a followed user public profile? | Oui, profil public visible aussi en etant follower. | test A_FOLLOW_H_PUBLIC + /api/profile/view (200) | VALIDATED |
 
 ## Posts
 | ID | Question (copie audit) | Reponse | Preuve | Statut |

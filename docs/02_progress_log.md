@@ -49,3 +49,11 @@
 - Blocages: Aucun blocage fonctionnel. Validation docker runtime complete reste en M6.
 - Prochaine etape: Implementer followers puis privacy des posts (M3).
 - Questions pour le prof: Aucune.
+
+## Session 2026-03-18 (M3 followers + profile access)
+- Date: 2026-03-18
+- Objectif de session: Implementer et valider toute la logique followers et acces profil public/prive.
+- Travail fait: Endpoints users/follows/follow-requests ajoutes (request, accept, decline, unfollow), endpoint profile view avec controle de visibilite, UI frontend pour discovery users + demandes entrantes + actions follow/unfollow.
+- Blocages: Aucun blocage technique majeur.
+- Prochaine etape: Implementer posts/commentaires + privacy public/almost/private.
+- Questions pour le prof: Aucune.

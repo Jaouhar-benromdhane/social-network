@@ -67,3 +67,11 @@ Utilise ce journal pour garder la trace des choix importants.
 - Decision retenue: Stockage fichier dans UPLOAD_DIR et chemin public en base.
 - Pourquoi: Plus simple, performant et conforme au sujet.
 - Impact: Endpoint /uploads expose les avatars, validation MIME JPEG/PNG/GIF.
+
+## D-008 - Strategie followers et profils prives
+- Date: 2026-03-18
+- Contexte: Besoin de passer les scenarios audit followers + visibilite profil.
+- Options considerees: logique permissive simple vs workflow request/accept/decline strict.
+- Decision retenue: Profil public => follow direct. Profil prive => request pending puis accept/decline.
+- Pourquoi: Repond exactement aux exigences du sujet et facilite les tests multi navigateurs.
+- Impact: Endpoints dedies /api/follows/* et /api/profile/view avec controle d acces.

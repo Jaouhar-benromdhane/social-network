@@ -14,7 +14,8 @@ Tout ce qui est optionnel est exclu.
 - Bonus: hors scope
 - Optionnel app-image: hors scope
 - M1 Architecture: done
-- M2 Auth + Profiles: next
+- M2 Auth + Profiles: in progress
+- M3 Followers + Posts: in progress (followers done, posts pending)
 
 ## 3) Documents de suivi
 - docs/00_plan_global.md
@@ -53,10 +54,10 @@ Fin:
 - Faire commit + push
 
 ## 7) Prochaines actions concretes
-1. Implementer followers (request/accept/decline/unfollow).
-2. Implementer feed + posts/commentaires avec privacy (public/almost/private).
-3. Brancher les regles profil public/prive avec les autorisations de lecture.
-4. Ajouter les tests de scenarios multi utilisateurs sur followers/posts.
+1. Implementer posts + commentaires avec upload image/gif.
+2. Implementer privacy des posts: public, almost private, private (liste followers cibles).
+3. Afficher les posts dans le profil et dans le feed selon permissions.
+4. Valider les lignes audit Posts et finaliser le reste des lignes Profile liees aux posts.
 5. Continuer la mise a jour du tracker audit apres chaque bloc valide.
 
 ## 8) Run local (M1)
