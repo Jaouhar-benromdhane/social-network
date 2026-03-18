@@ -13,6 +13,8 @@ Tout ce qui est optionnel est exclu.
 - Questionnaire mandatory recu: oui
 - Bonus: hors scope
 - Optionnel app-image: hors scope
+- M1 Architecture: done
+- M2 Auth + Profiles: next
 
 ## 3) Documents de suivi
 - docs/00_plan_global.md
@@ -51,8 +53,30 @@ Fin:
 - Faire commit + push
 
 ## 7) Prochaines actions concretes
-1. Fixer la stack frontend JS framework.
-2. Poser l architecture backend (server/app/db + migrations sqlite).
-3. Initialiser docker backend/frontend.
-4. Implementer auth/session/cookies avant le reste.
-5. Repondre a toutes les lignes de docs/01_audit_questions.md avec preuves.
+1. Implementer register/login/logout avec sessions et cookies.
+2. Ajouter le stockage avatar (jpeg/png/gif) cote backend.
+3. Implementer profil public/prive et edition profil.
+4. Valider les scenarios authentication du tracker audit.
+5. Commencer followers et privacy des posts.
+
+## 8) Run local (M1)
+Backend:
+1. cd backend
+2. go run ./cmd/server
+
+Frontend:
+1. cd frontend
+2. npm install
+3. npm run dev
+
+Verification rapide:
+1. Ouvrir http://localhost:5173
+2. Verifier que le statut API devient ok
+3. Verifier http://localhost:8080/api/health
+
+## 9) Run Docker (M1)
+Si docker compose plugin est indisponible localement, utiliser docker-compose.
+
+1. docker-compose -f docker-compose.yml up --build
+2. Frontend: http://localhost:3000
+3. Backend health: http://localhost:8080/api/health

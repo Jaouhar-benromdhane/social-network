@@ -43,3 +43,11 @@ Utilise ce journal pour garder la trace des choix importants.
 - Decision retenue: Mandatory strict uniquement. Aucun bonus, aucun app-image.
 - Pourquoi: Concentration totale sur la validation de l audit et la robustesse du projet principal.
 - Impact: Toute tache non mandatory est retiree du plan et des commits.
+
+## D-005 - Stack technique M1
+- Date: 2026-03-18
+- Contexte: Besoin de lancer rapidement une base propre et testable pour l audit.
+- Options considerees: plusieurs frameworks frontend et structures backend.
+- Decision retenue: Frontend Vue + Vite, backend Go, SQLite + golang-migrate, docker-compose 2 services.
+- Pourquoi: setup rapide, lisible, compatible avec les contraintes mandatory.
+- Impact: Les prochaines features seront implementees sur cette base.

@@ -33,3 +33,11 @@
 - Blocages: Aucun.
 - Prochaine etape: Demarrer implementation M1 sans deviation de scope.
 - Questions pour le prof: Aucune sur le scope, il est fixe.
+
+## Session 2026-03-18 (M1 architecture done)
+- Date: 2026-03-18
+- Objectif de session: Poser la base technique mandatory backend/frontend/db/docker.
+- Travail fait: Structure backend server/app/db creee, migrations SQLite ajoutees, frontend Vue+Vite initialise, Dockerfiles + docker-compose ajoutes, build backend/frontend valide.
+- Blocages: docker compose plugin absent localement, mais docker-compose v1 disponible.
+- Prochaine etape: Demarrer M2 avec register/login/logout + sessions/cookies.
+- Questions pour le prof: Aucune.

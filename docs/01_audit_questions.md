@@ -20,27 +20,27 @@ Conseil de remplissage:
 ## Functional
 | ID | Question (copie audit) | Reponse | Preuve | Statut |
 |---|---|---|---|---|
-| AQ-GEN-001 | Has the requirement for the allowed packages been respected? | TODO | TODO | TODO |
-| AQ-GEN-002 | Open the project. | TODO | TODO | TODO |
-| AQ-GEN-003 | When examining the file system of the backend, did you find a well-organized structure, similar to the example provided in the subject, with a clear separation of packages and migrations folders? | TODO | TODO | TODO |
-| AQ-GEN-004 | Is the file system for the frontend well organized? | TODO | TODO | TODO |
+| AQ-GEN-001 | Has the requirement for the allowed packages been respected? | Oui pour la base actuelle (golang-migrate et sqlite3 utilises cote backend). | backend/go.mod | READY |
+| AQ-GEN-002 | Open the project. | Le projet ouvre et build localement (backend et frontend). | go test ./... ; npm run build | VALIDATED |
+| AQ-GEN-003 | When examining the file system of the backend, did you find a well-organized structure, similar to the example provided in the subject, with a clear separation of packages and migrations folders? | Oui, separation server/app/db/migrations en place. | backend/cmd/server/main.go ; backend/internal/app/app.go ; backend/pkg/db/migrations/sqlite | READY |
+| AQ-GEN-004 | Is the file system for the frontend well organized? | Oui, frontend structure framework + src + docker claire. | frontend/package.json ; frontend/src/App.vue ; frontend/Dockerfile | READY |
 
 ## Backend
 | ID | Question (copie audit) | Reponse | Preuve | Statut |
 |---|---|---|---|---|
-| AQ-BE-001 | Does the backend include a clear separation of responsibilities among its three major parts - Server, App, and Database? | TODO | TODO | TODO |
-| AQ-BE-002 | Is there a server that effectively receives incoming requests and serves as the entry point for all requests to the application? | TODO | TODO | TODO |
-| AQ-BE-003 | Does the application (App) running on the server effectively listen for requests, retrieve information from the database, and send responses? | TODO | TODO | TODO |
-| AQ-BE-004 | Is the core logic of the social network implemented within the App component, including the logic for handling various types of requests based on HTTP or other protocols? | TODO | TODO | TODO |
+| AQ-BE-001 | Does the backend include a clear separation of responsibilities among its three major parts - Server, App, and Database? | Oui, separation explicite implementee. | backend/cmd/server/main.go ; backend/internal/app/app.go ; backend/pkg/db/sqlite/sqlite.go | READY |
+| AQ-BE-002 | Is there a server that effectively receives incoming requests and serves as the entry point for all requests to the application? | Oui, serveur HTTP Go actif sur APP_PORT avec entree /api/health. | backend/cmd/server/main.go ; curl /api/health | READY |
+| AQ-BE-003 | Does the application (App) running on the server effectively listen for requests, retrieve information from the database, and send responses? | Oui pour le baseline: route app + verification DB + reponse JSON. | backend/internal/app/app.go | READY |
+| AQ-BE-004 | Is the core logic of the social network implemented within the App component, including the logic for handling various types of requests based on HTTP or other protocols? | Base posee, logique sociale complete encore a implementer en M2-M5. | backend/internal/app/app.go | WIP |
 
 ## Database
 | ID | Question (copie audit) | Reponse | Preuve | Statut |
 |---|---|---|---|---|
-| AQ-DB-001 | Is SQLite being used in the project as the database? | TODO | TODO | TODO |
+| AQ-DB-001 | Is SQLite being used in the project as the database? | Oui, SQLite utilise comme DB principale. | backend/pkg/db/sqlite/sqlite.go ; backend/data/social_network.db | READY |
 | AQ-DB-002 | Are clients able to request information stored in the database, and can they submit data to be added to it without encountering errors or issues? | TODO | TODO | TODO |
-| AQ-DB-003 | Does the app implement a migration system? | TODO | TODO | TODO |
-| AQ-DB-004 | Is that migration file system well organized? (like the example from the subject) | TODO | TODO | TODO |
-| AQ-DB-005 | Start the social network application, then enter the database using the command sqlite3 <database_name.db>. Are the migrations being applied by the migration system? | TODO | TODO | TODO |
+| AQ-DB-003 | Does the app implement a migration system? | Oui, migrations appliquees automatiquement au demarrage backend. | backend/pkg/db/sqlite/sqlite.go | READY |
+| AQ-DB-004 | Is that migration file system well organized? (like the example from the subject) | Oui, dossiers et fichiers up/down organises sous pkg/db/migrations/sqlite. | backend/pkg/db/migrations/sqlite | READY |
+| AQ-DB-005 | Start the social network application, then enter the database using the command sqlite3 <database_name.db>. Are the migrations being applied by the migration system? | Oui, verification effectuee avec sqlite3 et tables creees. | sqlite3 backend/data/social_network.db '.tables' | VALIDATED |
 
 ## Authentication
 | ID | Question (copie audit) | Reponse | Preuve | Statut |
@@ -119,8 +119,8 @@ Conseil de remplissage:
 ## Docker
 | ID | Question (copie audit) | Reponse | Preuve | Statut |
 |---|---|---|---|---|
-| AQ-DOCK-001 | Try to run the application and use the docker command docker ps -a. Can you confirm that there are two containers (backend and frontend), and both containers have non-zero sizes indicating that they are not empty? | TODO | TODO | TODO |
-| AQ-DOCK-002 | Try to access the social network application through your web browser. Were you able to access the social network application through your web browser after running the docker containers, confirming that the containers are running and serving the application as expected? | TODO | TODO | TODO |
+| AQ-DOCK-001 | Try to run the application and use the docker command docker ps -a. Can you confirm that there are two containers (backend and frontend), and both containers have non-zero sizes indicating that they are not empty? | Configuration docker prete, execution containers a valider pendant M6. | docker-compose.yml ; backend/Dockerfile ; frontend/Dockerfile | WIP |
+| AQ-DOCK-002 | Try to access the social network application through your web browser. Were you able to access the social network application through your web browser after running the docker containers, confirming that the containers are running and serving the application as expected? | Pas encore execute en local, prevu en M6. | docker-compose.yml | TODO |
 
 ## Check final avant soutenance
 - Toutes les lignes ont un statut READY ou VALIDATED.

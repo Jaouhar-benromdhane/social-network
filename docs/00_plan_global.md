@@ -16,7 +16,7 @@ Contraintes:
 | Milestone | Objectif | Livrables | Critere de validation | Statut |
 |---|---|---|---|---|
 | M0 - Cadrage | Verrouiller le scope mandatory et l audit | Checklist audit complete, plan concret | Plus aucune ambiguite sur le scope | DONE |
-| M1 - Architecture | Poser la base technique backend/frontend/db/docker | Arborescence, scripts, migrations sqlite, run local | Le projet demarre et migre la DB | TODO |
+| M1 - Architecture | Poser la base technique backend/frontend/db/docker | Arborescence, scripts, migrations sqlite, run local | Le projet demarre et migre la DB | DONE |
 | M2 - Auth + Profiles | Implementer inscription, login, session, profil public/prive | Formulaires, middleware session, pages profils | Scenarios auth/profiles valides | TODO |
 | M3 - Followers + Posts | Implementer suivi + posts/commentaires avec privacy | Follow requests, feed, permissions de visibilite | Scenarios followers/posts valides | TODO |
 | M4 - Groups + Events | Implementer groupes, invitations, demandes, events | Groupes, demandes entree, vote event | Scenarios groupes/evenements valides | TODO |
