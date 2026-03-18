@@ -35,3 +35,11 @@ Utilise ce journal pour garder la trace des choix importants.
 - Decision retenue: Traiter app-image comme Milestone M7, apres validation mandatory.
 - Pourquoi: Eviter les retards sur le perimetre principal note.
 - Impact: Le suivi app-image est documente a part et n impacte pas les commits mandatory.
+
+## D-004 - Scope final verrouille: mandatory uniquement
+- Date: 2026-03-18
+- Contexte: Priorite absolue au passage de l audit mandatory et au fonctionnement stable.
+- Options considerees: 1) mandatory + optionnel 2) mandatory strict
+- Decision retenue: Mandatory strict uniquement. Aucun bonus, aucun app-image.
+- Pourquoi: Concentration totale sur la validation de l audit et la robustesse du projet principal.
+- Impact: Toute tache non mandatory est retiree du plan et des commits.

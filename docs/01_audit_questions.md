@@ -5,7 +5,7 @@ Ce fichier centralise toutes les questions de l audit mandatory.
 Scope:
 - Inclus: mandatory
 - Exclu: bonus
-- App image optionnel: suivi dans docs/05_app_image_optional.md
+- Exclu: optionnel app-image
 
 Statuts recommandes:
 - TODO: pas commence

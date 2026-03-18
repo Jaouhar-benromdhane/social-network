@@ -22,7 +22,6 @@ Contraintes:
 | M4 - Groups + Events | Implementer groupes, invitations, demandes, events | Groupes, demandes entree, vote event | Scenarios groupes/evenements valides | TODO |
 | M5 - Chat + Notifications | Implementer chat prive/groupe temps reel + notifications | WS hub, canaux prive/groupe, centre notif global | Scenarios chat/notifs valides | TODO |
 | M6 - Docker + Audit final | Stabiliser et valider tout l audit mandatory | 2 images/containers, checklist finalisee | Passage checklist mandatory complet | TODO |
-| M7 - App Image optionnel | Etendre en desktop Electron si temps | App login + ws + offline + search | Critere optionnel atteint | TODO |
 
 ## 3) Ordre de travail recommande
 1. M1 d abord pour eviter les reworks structuraux.
@@ -30,7 +29,6 @@ Contraintes:
 3. M3 puis M4 pour la logique sociale et communautaire.
 4. M5 apres, quand les permissions de base existent deja.
 5. M6 en fin de mandatory.
-6. M7 seulement apres mandatory valide.
 
 ## 4) Decoupage sprint (indicatif)
 | Sprint | Focus | Resultat attendu |
@@ -41,7 +39,6 @@ Contraintes:
 | S4 | M4 | Groupes + events operationnels |
 | S5 | M5 | Chat + notifications en temps reel |
 | S6 | M6 | Docker + audit mandatory valide |
-| S7 | M7 | App image optionnelle (si temps) |
 
 ## 5) Regles de pilotage
 - Travailler en blocs courts et testables.

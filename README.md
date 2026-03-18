@@ -5,14 +5,14 @@ Ce repo sert a construire le projet social-network pas a pas, de facon propre, t
 
 Le scope principal actuel est le mandatory.
 Les bonus ne sont pas pris.
-Le projet optionnel app-image (Electron) est trace dans un document separe.
+Tout ce qui est optionnel est exclu.
 
 ## 2) Etat actuel
 - Sujet mandatory recu: oui
 - Audit mandatory recu: oui
 - Questionnaire mandatory recu: oui
 - Bonus: hors scope
-- App image optionnel: recu, planifie apres le mandatory
+- Optionnel app-image: hors scope
 
 ## 3) Documents de suivi
 - docs/00_plan_global.md
@@ -20,7 +20,6 @@ Le projet optionnel app-image (Electron) est trace dans un document separe.
 - docs/02_progress_log.md
 - docs/03_decisions.md
 - docs/04_git_strategy.md
-- docs/05_app_image_optional.md
 
 ## 4) Methode de travail (pas a pas)
 1. Transformer chaque exigence en tache testable.
@@ -56,3 +55,4 @@ Fin:
 2. Poser l architecture backend (server/app/db + migrations sqlite).
 3. Initialiser docker backend/frontend.
 4. Implementer auth/session/cookies avant le reste.
+5. Repondre a toutes les lignes de docs/01_audit_questions.md avec preuves.

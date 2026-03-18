@@ -25,3 +25,11 @@
 - Blocages: Aucun blocage technique pour le cadrage. Les choix de stack et architecture executable restent a verrouiller.
 - Prochaine etape: Demarrer M1 (architecture backend/frontend + migrations sqlite + docker skeleton).
 - Questions pour le prof: Confirmer qu app-image reste strictement optionnel et hors notation mandatory.
+
+## Session 2026-03-18 (scope lock final)
+- Date: 2026-03-18
+- Objectif de session: Verrouiller le scope a 100 pourcent mandatory.
+- Travail fait: Suppression des references optionnelles, confirmation du mode mandatory strict, alignment des docs de pilotage.
+- Blocages: Aucun.
+- Prochaine etape: Demarrer implementation M1 sans deviation de scope.
+- Questions pour le prof: Aucune sur le scope, il est fixe.
