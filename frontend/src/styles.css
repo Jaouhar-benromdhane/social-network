@@ -21,7 +21,7 @@ body {
 }
 
 .card {
-  width: min(560px, 100%);
+  width: min(760px, 100%);
   background: #ffffff;
   border: 1px solid #dce7f5;
   border-radius: 16px;
@@ -46,6 +46,139 @@ h1 {
 .subtitle {
   margin: 0;
   color: #3e4a5f;
+}
+
+.tabs {
+  margin-top: 18px;
+  display: inline-flex;
+  border: 1px solid #cfdaeb;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.tab {
+  border: 0;
+  background: #f4f8ff;
+  color: #3a4b65;
+  padding: 10px 16px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.tab.active {
+  background: #2f5fa8;
+  color: #fff;
+}
+
+.form {
+  margin-top: 18px;
+  display: grid;
+  gap: 12px;
+}
+
+.form label {
+  display: grid;
+  gap: 6px;
+  color: #31435f;
+  font-size: 0.95rem;
+}
+
+.grid-2 {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+input,
+select,
+textarea,
+button {
+  font: inherit;
+}
+
+input,
+select,
+textarea {
+  border: 1px solid #c7d6ea;
+  border-radius: 10px;
+  padding: 10px 12px;
+  width: 100%;
+}
+
+button {
+  border: 0;
+  border-radius: 10px;
+  background: #2f5fa8;
+  color: #fff;
+  padding: 10px 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+button.secondary {
+  background: #5f6f85;
+}
+
+.profile-head {
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 2px solid #cfdaeb;
+  object-fit: cover;
+}
+
+.name {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.subline {
+  margin: 4px 0 0;
+  color: #4e5f79;
+}
+
+.profile-grid {
+  margin-top: 14px;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.profile-grid p {
+  margin: 0;
+  color: #31435f;
+}
+
+.about {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border: 1px solid #d4deec;
+  border-radius: 10px;
+  color: #31435f;
+}
+
+.actions {
+  margin-top: 16px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr;
+}
+
+.actions label {
+  display: grid;
+  gap: 6px;
 }
 
 .status-row {

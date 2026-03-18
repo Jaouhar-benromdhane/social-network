@@ -41,3 +41,11 @@
 - Blocages: docker compose plugin absent localement, mais docker-compose v1 disponible.
 - Prochaine etape: Demarrer M2 avec register/login/logout + sessions/cookies.
 - Questions pour le prof: Aucune.
+
+## Session 2026-03-18 (M2 auth baseline)
+- Date: 2026-03-18
+- Objectif de session: Implementer authentification mandatory et profil de base.
+- Travail fait: Endpoints register/login/logout/me implementes, sessions+cookies actifs, upload avatar jpeg/png/gif ajoute, endpoint profile me + toggle public/private ajoute, UI frontend login/register/profil connectee.
+- Blocages: Aucun blocage fonctionnel. Validation docker runtime complete reste en M6.
+- Prochaine etape: Implementer followers puis privacy des posts (M3).
+- Questions pour le prof: Aucune.

@@ -22,7 +22,13 @@ func main() {
 	}
 	defer db.Close()
 
-	application := app.New(db)
+	application, err := app.New(db, app.Config{
+		UploadDir:       cfg.UploadDir,
+		SessionDuration: time.Duration(cfg.SessionHours) * time.Hour,
+	})
+	if err != nil {
+		log.Fatalf("failed to initialize app: %v", err)
+	}
 
 	server := &http.Server{
 		Addr:              ":" + cfg.Port,

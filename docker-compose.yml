@@ -10,6 +10,8 @@ services:
       APP_PORT: "8080"
       DB_PATH: /app/data/social_network.db
       MIGRATIONS_PATH: file:///app/pkg/db/migrations/sqlite
+      UPLOAD_DIR: /app/data/uploads
+      SESSION_HOURS: "168"
     volumes:
       - ./backend/data:/app/data
     ports:

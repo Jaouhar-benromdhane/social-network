@@ -53,11 +53,11 @@ Fin:
 - Faire commit + push
 
 ## 7) Prochaines actions concretes
-1. Implementer register/login/logout avec sessions et cookies.
-2. Ajouter le stockage avatar (jpeg/png/gif) cote backend.
-3. Implementer profil public/prive et edition profil.
-4. Valider les scenarios authentication du tracker audit.
-5. Commencer followers et privacy des posts.
+1. Implementer followers (request/accept/decline/unfollow).
+2. Implementer feed + posts/commentaires avec privacy (public/almost/private).
+3. Brancher les regles profil public/prive avec les autorisations de lecture.
+4. Ajouter les tests de scenarios multi utilisateurs sur followers/posts.
+5. Continuer la mise a jour du tracker audit apres chaque bloc valide.
 
 ## 8) Run local (M1)
 Backend:

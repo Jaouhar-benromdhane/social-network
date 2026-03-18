@@ -51,3 +51,19 @@ Utilise ce journal pour garder la trace des choix importants.
 - Decision retenue: Frontend Vue + Vite, backend Go, SQLite + golang-migrate, docker-compose 2 services.
 - Pourquoi: setup rapide, lisible, compatible avec les contraintes mandatory.
 - Impact: Les prochaines features seront implementees sur cette base.
+
+## D-006 - Auth mandatory via sessions et cookies
+- Date: 2026-03-18
+- Contexte: Besoin de valider rapidement tout le bloc Authentication de l audit.
+- Options considerees: token stateless vs sessions cote serveur.
+- Decision retenue: Sessions server-side en base SQLite + cookie HttpOnly session_token.
+- Pourquoi: Conforme au sujet (sessions/cookies) et simple a verifier en audit multi navigateur.
+- Impact: Tous les endpoints prives passent par lecture de cookie de session active.
+
+## D-007 - Avatar au register
+- Date: 2026-03-18
+- Contexte: Le formulaire impose Avatar/Image optionnel.
+- Options considerees: stockage binaire DB vs stockage fichier + chemin DB.
+- Decision retenue: Stockage fichier dans UPLOAD_DIR et chemin public en base.
+- Pourquoi: Plus simple, performant et conforme au sujet.
+- Impact: Endpoint /uploads expose les avatars, validation MIME JPEG/PNG/GIF.

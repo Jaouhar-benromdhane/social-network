@@ -3,13 +3,24 @@ package app
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"net/http"
+	"os"
+	"path/filepath"
 	"time"
 )
 
 // App wires HTTP routes with shared dependencies.
 type App struct {
-	db *sql.DB
+	db              *sql.DB
+	uploadDir       string
+	sessionDuration time.Duration
+}
+
+// Config controls runtime app behavior.
+type Config struct {
+	UploadDir       string
+	SessionDuration time.Duration
 }
 
 type healthResponse struct {
@@ -18,13 +29,38 @@ type healthResponse struct {
 	Time     string `json:"time"`
 }
 
-func New(db *sql.DB) *App {
-	return &App{db: db}
+func New(db *sql.DB, cfg Config) (*App, error) {
+	uploadDir := cfg.UploadDir
+	if uploadDir == "" {
+		uploadDir = "./data/uploads"
+	}
+
+	sessionDuration := cfg.SessionDuration
+	if sessionDuration <= 0 {
+		sessionDuration = 7 * 24 * time.Hour
+	}
+
+	if err := os.MkdirAll(filepath.Join(uploadDir, "avatars"), 0o755); err != nil {
+		return nil, err
+	}
+
+	return &App{
+		db:              db,
+		uploadDir:       uploadDir,
+		sessionDuration: sessionDuration,
+	}, nil
 }
 
 func (a *App) Routes() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/health", a.handleHealth)
+	mux.HandleFunc("/api/auth/register", a.handleRegister)
+	mux.HandleFunc("/api/auth/login", a.handleLogin)
+	mux.HandleFunc("/api/auth/logout", a.handleLogout)
+	mux.HandleFunc("/api/auth/me", a.handleMe)
+	mux.HandleFunc("/api/profile/me", a.handleMyProfile)
+	mux.HandleFunc("/api/profile/me/visibility", a.handlePatchProfileVisibility)
+	mux.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir(a.uploadDir))))
 	return withCORS(mux)
 }
 
@@ -56,9 +92,28 @@ func writeJSON(w http.ResponseWriter, status int, payload any) {
 	_ = json.NewEncoder(w).Encode(payload)
 }
 
+func writeError(w http.ResponseWriter, status int, message string) {
+	writeJSON(w, status, map[string]string{"error": message})
+}
+
+func methodNotAllowed(w http.ResponseWriter) {
+	writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+}
+
+func isUnauthorizedError(err error) bool {
+	return errors.Is(err, errUnauthorized)
+}
+
 func withCORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
+		origin := r.Header.Get("Origin")
+		if origin == "" {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+		} else {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+			w.Header().Set("Vary", "Origin")
+			w.Header().Set("Access-Control-Allow-Credentials", "true")
+		}
 		w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type,Authorization")
 

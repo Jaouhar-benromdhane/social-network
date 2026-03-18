@@ -1,4 +1,4 @@
-FROM golang:1.23-bookworm AS builder
+FROM golang:1.24-bookworm AS builder
 
 WORKDIR /app
 COPY backend/go.mod backend/go.sum ./
@@ -20,6 +20,8 @@ RUN mkdir -p /app/data
 ENV APP_PORT=8080
 ENV DB_PATH=/app/data/social_network.db
 ENV MIGRATIONS_PATH=file:///app/pkg/db/migrations/sqlite
+ENV UPLOAD_DIR=/app/data/uploads
+ENV SESSION_HOURS=168
 
 EXPOSE 8080
 CMD ["./server"]
