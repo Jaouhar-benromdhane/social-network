@@ -18,6 +18,7 @@ Tout ce qui est optionnel est exclu.
 - M3 Followers + Posts: done
 - M4 Groups + Events: done
 - M5 Chat + Notifications: done
+- M6 Docker + Audit final: done
 
 ## 3) Documents de suivi
 - docs/00_plan_global.md
@@ -56,11 +57,11 @@ Fin:
 - Faire commit + push
 
 ## 7) Prochaines actions concretes
-1. Finaliser M6: verification docker end-to-end.
-2. Valider AQ-DOCK-001 et AQ-DOCK-002.
-3. Faire un dernier passage global checklist mandatory.
-4. Corriger les derniers details de packaging/deploiement si besoin.
-5. Geler la version de soutenance.
+1. Geler la version de soutenance (tag/release local).
+2. Repasser un smoke test complet avant presentation.
+3. Garder les scripts e2e de preuve a disposition.
+4. Verifier les ports libres et l environnement demo le jour J.
+5. Presenter les preuves audit par milestone.
 
 ## 8) Run local (M1)
 Backend:

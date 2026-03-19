@@ -119,8 +119,8 @@ Conseil de remplissage:
 ## Docker
 | ID | Question (copie audit) | Reponse | Preuve | Statut |
 |---|---|---|---|---|
-| AQ-DOCK-001 | Try to run the application and use the docker command docker ps -a. Can you confirm that there are two containers (backend and frontend), and both containers have non-zero sizes indicating that they are not empty? | Configuration docker prete, execution containers a valider pendant M6. | docker-compose.yml ; backend/Dockerfile ; frontend/Dockerfile | WIP |
-| AQ-DOCK-002 | Try to access the social network application through your web browser. Were you able to access the social network application through your web browser after running the docker containers, confirming that the containers are running and serving the application as expected? | Pas encore execute en local, prevu en M6. | docker-compose.yml | TODO |
+| AQ-DOCK-001 | Try to run the application and use the docker command docker ps -a. Can you confirm that there are two containers (backend and frontend), and both containers have non-zero sizes indicating that they are not empty? | Oui, les deux conteneurs du projet existent et sont en execution, avec des tailles virtuelles non nulles. | docker ps -a --size --filter name=social-network-backend --filter name=social-network-frontend ; social-network-frontend size 895B (virtual 48.4MB) ; social-network-backend size 0B (virtual 97.5MB) | VALIDATED |
+| AQ-DOCK-002 | Try to access the social network application through your web browser. Were you able to access the social network application through your web browser after running the docker containers, confirming that the containers are running and serving the application as expected? | Oui, frontend et backend sont accessibles via les ports exposes des conteneurs. | FRONT=200 sur http://127.0.0.1:3000 ; HEALTH=200 sur http://127.0.0.1:8080/api/health ; docker logs frontend/backend OK | VALIDATED |
 
 ## Check final avant soutenance
 - Toutes les lignes ont un statut READY ou VALIDATED.

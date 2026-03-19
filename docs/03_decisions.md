@@ -100,6 +100,14 @@ Utilise ce journal pour garder la trace des choix importants.
 - Pourquoi: Respect du modele communautaire du sujet, reduction du risque d abus et comportement previsible a auditer.
 - Impact: Controles membership centralises sur les endpoints groups activity et persistance claire du vote dans event_votes.
 
+## D-012 - Correction packaging Docker frontend
+- Date: 2026-03-19
+- Contexte: Validation M6 bloquee car le conteneur frontend quittait immediatement avec ./server not found.
+- Options considerees: 1) contourner via override compose 2) corriger le Dockerfile frontend.
+- Decision retenue: Nettoyer le Dockerfile frontend pour ne garder que le runtime nginx.
+- Pourquoi: Le frontend doit servir les assets statiques via nginx, sans directives backend residuelles.
+- Impact: Conteneur frontend stable (port 3000), AQ-DOCK-001/002 validables en execution reelle.
+
 ## D-012 - Chat mandatory via websocket + permissions strictes
 - Date: 2026-03-19
 - Contexte: AQ-CHAT impose du temps reel websocket et des regles d acces prive/groupe.

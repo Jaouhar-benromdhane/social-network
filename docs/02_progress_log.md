@@ -97,3 +97,11 @@
 - Blocages: Aucun.
 - Prochaine etape: Continuer M6.
 - Questions pour le prof: Aucune.
+
+## Session 2026-03-19 (M6 docker + audit final done)
+- Date: 2026-03-19
+- Objectif de session: Valider les lignes Docker AQ-DOCK-001 et AQ-DOCK-002, puis clore le mandatory.
+- Travail fait: Execution docker-compose up --build -d, verification des conteneurs backend/frontend avec tailles virtuelles non nulles, verification HTTP frontend/backend (3000 et 8080), correction du Dockerfile frontend (suppression de directives backend erronees), puis validation finale des 2 lignes Docker.
+- Blocages: Erreur compose v1 lors de recreation frontend (ContainerConfig) contournee par nettoyage du conteneur stale puis recreation.
+- Prochaine etape: Stabilisation finale pour soutenance (gel version + checks de routine).
+- Questions pour le prof: Aucune.

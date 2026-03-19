@@ -21,7 +21,7 @@ Contraintes:
 | M3 - Followers + Posts | Implementer suivi + posts/commentaires avec privacy | Follow requests, feed, permissions de visibilite | Scenarios followers/posts valides | DONE |
 | M4 - Groups + Events | Implementer groupes, invitations, demandes, events | Groupes, demandes entree, vote event | Scenarios groupes/evenements valides | DONE |
 | M5 - Chat + Notifications | Implementer chat prive/groupe temps reel + notifications | WS hub, canaux prive/groupe, centre notif global | Scenarios chat/notifs valides | DONE |
-| M6 - Docker + Audit final | Stabiliser et valider tout l audit mandatory | 2 images/containers, checklist finalisee | Passage checklist mandatory complet | TODO |
+| M6 - Docker + Audit final | Stabiliser et valider tout l audit mandatory | 2 images/containers, checklist finalisee | Passage checklist mandatory complet | DONE |
 
 ## 3) Ordre de travail recommande
 1. M1 d abord pour eviter les reworks structuraux.
