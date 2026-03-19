@@ -17,6 +17,7 @@ Tout ce qui est optionnel est exclu.
 - M2 Auth + Profiles: done
 - M3 Followers + Posts: done
 - M4 Groups + Events: done
+- M5 Chat + Notifications: done
 
 ## 3) Documents de suivi
 - docs/00_plan_global.md
@@ -55,11 +56,11 @@ Fin:
 - Faire commit + push
 
 ## 7) Prochaines actions concretes
-1. Demarrer M5: chat prive en temps reel.
-2. Etendre au chat de groupe temps reel.
-3. Ajouter le centre de notifications global.
-4. Valider les lignes AQ-CHAT et AQ-NOTIF avec scenarios multi navigateurs.
-5. Finaliser M6 docker + verification audit complete.
+1. Finaliser M6: verification docker end-to-end.
+2. Valider AQ-DOCK-001 et AQ-DOCK-002.
+3. Faire un dernier passage global checklist mandatory.
+4. Corriger les derniers details de packaging/deploiement si besoin.
+5. Geler la version de soutenance.
 
 ## 8) Run local (M1)
 Backend:

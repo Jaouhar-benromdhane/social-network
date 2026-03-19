@@ -207,6 +207,13 @@ func (a *App) handleCreateFollowRequest(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	_ = a.pushNotification(r.Context(), targetUser.ID, "follow_request", map[string]any{
+		"request_id":         requestID,
+		"requester_id":       currentUser.ID,
+		"requester_name":     strings.TrimSpace(currentUser.FirstName + " " + currentUser.LastName),
+		"requester_nickname": currentUser.Nickname,
+	})
+
 	writeJSON(w, http.StatusOK, map[string]any{
 		"status":           status,
 		"request_id":       requestID,

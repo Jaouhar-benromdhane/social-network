@@ -234,6 +234,18 @@ func (a *App) handleCreateGroupInvite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	group, err := a.loadGroupByID(r, currentUser.ID, req.GroupID)
+	if err == nil {
+		_ = a.pushNotification(r.Context(), req.InviteeID, "group_invite", map[string]any{
+			"invite_id":        inviteID,
+			"group_id":         req.GroupID,
+			"group_title":      group.Title,
+			"inviter_id":       currentUser.ID,
+			"inviter_name":     strings.TrimSpace(currentUser.FirstName + " " + currentUser.LastName),
+			"inviter_nickname": currentUser.Nickname,
+		})
+	}
+
 	writeJSON(w, http.StatusOK, map[string]string{
 		"invite_id": inviteID,
 		"status":    status,
@@ -462,6 +474,25 @@ func (a *App) handleCreateGroupJoinRequest(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to create join request")
 		return
+	}
+
+	var creatorID string
+	var groupTitle string
+	err = a.db.QueryRowContext(r.Context(), `
+		SELECT creator_id, title
+		FROM groups
+		WHERE id = ?
+		LIMIT 1
+	`, req.GroupID).Scan(&creatorID, &groupTitle)
+	if err == nil && creatorID != "" && creatorID != currentUser.ID {
+		_ = a.pushNotification(r.Context(), creatorID, "group_join_request", map[string]any{
+			"request_id":         requestID,
+			"group_id":           req.GroupID,
+			"group_title":        groupTitle,
+			"requester_id":       currentUser.ID,
+			"requester_name":     strings.TrimSpace(currentUser.FirstName + " " + currentUser.LastName),
+			"requester_nickname": currentUser.Nickname,
+		})
 	}
 
 	writeJSON(w, http.StatusOK, map[string]string{
@@ -842,4 +873,27 @@ func (a *App) upsertGroupJoinRequest(r *http.Request, groupID, requesterID strin
 	}
 
 	return existingID, "pending", nil
+}
+
+func (a *App) loadGroupMemberIDs(r *http.Request, groupID string) ([]string, error) {
+	rows, err := a.db.QueryContext(r.Context(), `
+		SELECT user_id
+		FROM group_members
+		WHERE group_id = ?
+	`, groupID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	memberIDs := make([]string, 0)
+	for rows.Next() {
+		var userID string
+		if err := rows.Scan(&userID); err != nil {
+			return nil, err
+		}
+		memberIDs = append(memberIDs, userID)
+	}
+
+	return memberIDs, rows.Err()
 }

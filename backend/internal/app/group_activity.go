@@ -390,6 +390,33 @@ func (a *App) handleCreateGroupEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	memberIDs, err := a.loadGroupMemberIDs(r, req.GroupID)
+	if err == nil {
+		groupTitle := ""
+		_ = a.db.QueryRowContext(r.Context(), `
+			SELECT title
+			FROM groups
+			WHERE id = ?
+			LIMIT 1
+		`, req.GroupID).Scan(&groupTitle)
+
+		for _, memberID := range memberIDs {
+			if memberID == currentUser.ID {
+				continue
+			}
+			_ = a.pushNotification(r.Context(), memberID, "group_event_created", map[string]any{
+				"event_id":         event.ID,
+				"group_id":         req.GroupID,
+				"group_title":      groupTitle,
+				"event_title":      event.Title,
+				"event_datetime":   event.EventDateTime,
+				"creator_id":       currentUser.ID,
+				"creator_name":     strings.TrimSpace(currentUser.FirstName + " " + currentUser.LastName),
+				"creator_nickname": currentUser.Nickname,
+			})
+		}
+	}
+
 	writeJSON(w, http.StatusCreated, map[string]groupEventItem{"event": event})
 }
 

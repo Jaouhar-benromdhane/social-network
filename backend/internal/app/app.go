@@ -15,6 +15,7 @@ type App struct {
 	db              *sql.DB
 	uploadDir       string
 	sessionDuration time.Duration
+	wsHub           *wsHub
 }
 
 // Config controls runtime app behavior.
@@ -54,6 +55,7 @@ func New(db *sql.DB, cfg Config) (*App, error) {
 		db:              db,
 		uploadDir:       uploadDir,
 		sessionDuration: sessionDuration,
+		wsHub:           newWSHub(),
 	}, nil
 }
 
@@ -87,6 +89,11 @@ func (a *App) Routes() http.Handler {
 	mux.HandleFunc("/api/groups/posts/comments", a.handleCreateGroupComment)
 	mux.HandleFunc("/api/groups/events", a.handleGroupEvents)
 	mux.HandleFunc("/api/groups/events/vote", a.handleVoteGroupEvent)
+	mux.HandleFunc("/api/ws", a.handleWebSocket)
+	mux.HandleFunc("/api/chat/private/messages", a.handlePrivateMessages)
+	mux.HandleFunc("/api/chat/groups/messages", a.handleGroupMessages)
+	mux.HandleFunc("/api/notifications", a.handleNotifications)
+	mux.HandleFunc("/api/notifications/read", a.handleMarkNotificationsRead)
 	mux.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir(a.uploadDir))))
 	return withCORS(mux)
 }

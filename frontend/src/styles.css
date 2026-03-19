@@ -443,6 +443,48 @@ button.secondary {
   justify-content: flex-end;
 }
 
+.notification-item {
+  align-items: flex-start;
+}
+
+.chat-list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.chat-item {
+  border: 1px solid #d5dfed;
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: #f7faff;
+}
+
+.chat-item.mine {
+  background: #e6f2ff;
+  border-color: #bfd9f8;
+}
+
+.chat-meta {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #4f607b;
+}
+
+.chat-text {
+  margin: 6px 0 0;
+  color: #2f415d;
+  white-space: pre-wrap;
+}
+
+.chat-input {
+  margin-top: 10px;
+  display: grid;
+  gap: 8px;
+}
+
 .tiny-select {
   width: 190px;
   min-width: 190px;

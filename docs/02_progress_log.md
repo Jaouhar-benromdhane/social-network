@@ -81,3 +81,19 @@
 - Blocages: Aucun blocage fonctionnel. Une modification locale inattendue a ete verifiee puis l etat git a ete nettoye avant finalisation.
 - Prochaine etape: Demarrer M5 (chat + notifications temps reel).
 - Questions pour le prof: Aucune.
+
+## Session 2026-03-19 (M5 chat + notifications done)
+- Date: 2026-03-19
+- Objectif de session: Implementer et valider chat prive/groupe temps reel + centre notifications.
+- Travail fait: Ajout backend websocket auth (/api/ws), endpoints chat prive/groupe, endpoints notifications (list/read), emission de notifications sur follow request, group invite, group join request et event creation, puis integration frontend (sections Notifications, Private chat, Group chat + ecoute WS realtime).
+- Blocages: Aucun blocage fonctionnel. Ajustement proxy WS cote Vite/Nginx pour le mode dev/docker.
+- Prochaine etape: Demarrer M6 (docker final + dernier passage audit).
+- Questions pour le prof: Aucune.
+
+## Session 2026-03-19 (M2 evidence closure)
+- Date: 2026-03-19
+- Objectif de session: Fermer les 2 lignes M2 encore en READY (AQ-AUTH-002, AQ-PROF-001).
+- Travail fait: Verification scriptable de register/profile pour prouver presence des champs register et absence de password dans /api/profile/me.
+- Blocages: Aucun.
+- Prochaine etape: Continuer M6.
+- Questions pour le prof: Aucune.

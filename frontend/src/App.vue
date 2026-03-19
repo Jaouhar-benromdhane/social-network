@@ -621,6 +621,133 @@
           <p v-else class="muted">No pending join requests for your groups.</p>
         </section>
 
+        <section class="network">
+          <h3>Notifications</h3>
+
+          <div class="user-actions">
+            <span v-if="notificationsUnread" class="pill pending">Unread: {{ notificationsUnread }}</span>
+            <span v-else class="pill success">All read</span>
+            <button
+              type="button"
+              class="tiny secondary"
+              :disabled="loading || !notifications.length"
+              @click="markAllNotificationsRead"
+            >
+              Mark all as read
+            </button>
+          </div>
+
+          <ul v-if="notifications.length" class="user-list">
+            <li v-for="notification in notifications" :key="notification.id" class="user-item notification-item">
+              <div>
+                <strong>{{ formatNotification(notification) }}</strong>
+                <p class="muted small">{{ formatDate(notification.created_at) }}</p>
+              </div>
+
+              <div class="user-actions">
+                <span v-if="notification.is_read" class="pill success">Read</span>
+                <button
+                  v-else
+                  type="button"
+                  class="tiny"
+                  :disabled="loading"
+                  @click="markNotificationRead(notification.id)"
+                >
+                  Mark read
+                </button>
+              </div>
+            </li>
+          </ul>
+          <p v-else class="muted">No notifications yet.</p>
+        </section>
+
+        <section class="network">
+          <h3>Private chat</h3>
+          <p class="muted">Private chat is enabled only when both users follow each other.</p>
+
+          <label>
+            Chat with
+            <select v-model="privateChatTargetID">
+              <option value="">Choose a mutual follower...</option>
+              <option v-for="user in mutualChatUsers" :key="user.id" :value="user.id">
+                {{ user.first_name }} {{ user.last_name }}
+              </option>
+            </select>
+          </label>
+
+          <template v-if="privateChatTargetID">
+            <ul v-if="privateMessages.length" class="chat-list">
+              <li
+                v-for="message in privateMessages"
+                :key="message.id"
+                class="chat-item"
+                :class="{ mine: message.sender_id === me.id }"
+              >
+                <p class="chat-meta">
+                  {{ message.sender.first_name }} {{ message.sender.last_name }}
+                  · {{ formatDate(message.created_at) }}
+                </p>
+                <p class="chat-text">{{ message.content }}</p>
+              </li>
+            </ul>
+            <p v-else class="muted">No private messages yet.</p>
+
+            <form class="chat-input" @submit.prevent="sendPrivateMessage">
+              <textarea
+                v-model="privateMessageDraft"
+                rows="2"
+                placeholder="Write a private message (emoji OK)"
+              ></textarea>
+              <button type="submit" class="tiny" :disabled="loading">Send</button>
+            </form>
+          </template>
+
+          <p v-else class="muted">Choose one mutual follower to start chatting.</p>
+        </section>
+
+        <section class="network">
+          <h3>Group chat</h3>
+
+          <label>
+            Group room
+            <select v-model="groupChatTargetID">
+              <option value="">Choose one of your groups...</option>
+              <option v-for="group in memberGroups" :key="group.id" :value="group.id">
+                {{ group.title }}
+              </option>
+            </select>
+          </label>
+
+          <template v-if="groupChatTargetID">
+            <ul v-if="groupMessages.length" class="chat-list">
+              <li
+                v-for="message in groupMessages"
+                :key="message.id"
+                class="chat-item"
+                :class="{ mine: message.sender_id === me.id }"
+              >
+                <p class="chat-meta">
+                  {{ message.sender.first_name }} {{ message.sender.last_name }}
+                  · {{ formatDate(message.created_at) }}
+                </p>
+                <p class="chat-text">{{ message.content }}</p>
+              </li>
+            </ul>
+            <p v-else class="muted">No group messages yet.</p>
+
+            <form class="chat-input" @submit.prevent="sendGroupMessage">
+              <textarea
+                v-model="groupMessageDraft"
+                rows="2"
+                placeholder="Write a group message (emoji OK)"
+              ></textarea>
+              <button type="submit" class="tiny" :disabled="loading">Send</button>
+            </form>
+          </template>
+
+          <p v-else class="muted">Choose one group to open its chat room.</p>
+        </section>
+
         <p v-if="authError" class="error">{{ authError }}</p>
       </template>
     </section>
@@ -628,7 +755,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from "vue";
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from "vue";
 
 const status = ref("checking");
 const error = ref("");
@@ -650,6 +777,17 @@ const groupJoinRequestsIncoming = ref([]);
 const selectedGroupID = ref("");
 const groupPosts = ref([]);
 const groupEvents = ref([]);
+const notifications = ref([]);
+const notificationsUnread = ref(0);
+const privateChatTargetID = ref("");
+const privateMessages = ref([]);
+const privateMessageDraft = ref("");
+const groupChatTargetID = ref("");
+const groupMessages = ref([]);
+const groupMessageDraft = ref("");
+
+let realtimeSocket = null;
+let reconnectTimer = null;
 
 const postForm = reactive({
   content: "",
@@ -710,14 +848,32 @@ const avatarUrl = computed(() => me.value?.avatar_path || "");
 const followerAudience = computed(() => profile.value?.followers || []);
 const memberGroups = computed(() => groups.value.filter((group) => group.is_member));
 const discoverGroups = computed(() => groups.value.filter((group) => !group.is_member));
+const mutualChatUsers = computed(() => {
+  const followers = profile.value?.followers || [];
+  const following = profile.value?.following || [];
+  const followingIDs = new Set(following.map((user) => user.id));
+  return followers.filter((user) => followingIDs.has(user.id));
+});
 
 onMounted(async () => {
   await checkHealth();
   await loadCurrentUser();
 });
 
+onUnmounted(() => {
+  closeRealtimeSocket();
+});
+
 watch(selectedGroupID, async () => {
   await loadSelectedGroupContent();
+});
+
+watch(privateChatTargetID, async () => {
+  await loadPrivateMessages();
+});
+
+watch(groupChatTargetID, async () => {
+  await loadGroupMessages();
 });
 
 async function checkHealth() {
@@ -738,6 +894,7 @@ async function loadCurrentUser() {
     });
 
     if (response.status === 401) {
+      closeRealtimeSocket();
       me.value = null;
       profile.value = null;
       networkUsers.value = [];
@@ -749,6 +906,14 @@ async function loadCurrentUser() {
       selectedGroupID.value = "";
       groupPosts.value = [];
       groupEvents.value = [];
+      notifications.value = [];
+      notificationsUnread.value = 0;
+      privateChatTargetID.value = "";
+      privateMessages.value = [];
+      privateMessageDraft.value = "";
+      groupChatTargetID.value = "";
+      groupMessages.value = [];
+      groupMessageDraft.value = "";
       return;
     }
 
@@ -765,6 +930,8 @@ async function loadCurrentUser() {
     await loadNetworkData();
     await loadFeed();
     await loadGroupsData();
+    await loadNotifications();
+    connectRealtimeSocket();
   } catch (_err) {
     authError.value = "Unable to reach authentication service.";
   }
@@ -781,6 +948,12 @@ async function loadMyProfile() {
     }
 
     profile.value = await response.json();
+
+    const mutualIDs = new Set(mutualChatUsers.value.map((user) => user.id));
+    if (!mutualIDs.has(privateChatTargetID.value)) {
+      privateChatTargetID.value = "";
+      privateMessages.value = [];
+    }
   } catch (_err) {
     // Keep UI usable even if profile summary fails.
   }
@@ -816,6 +989,8 @@ async function submitLogin() {
     await loadNetworkData();
     await loadFeed();
     await loadGroupsData();
+    await loadNotifications();
+    connectRealtimeSocket();
   } catch (_err) {
     authError.value = "Login request failed.";
   } finally {
@@ -864,6 +1039,8 @@ async function submitRegister() {
     await loadNetworkData();
     await loadFeed();
     await loadGroupsData();
+    await loadNotifications();
+    connectRealtimeSocket();
   } catch (_err) {
     authError.value = "Registration request failed.";
   } finally {
@@ -1094,10 +1271,13 @@ async function loadGroupsData() {
     selectedGroupID.value = "";
     groupPosts.value = [];
     groupEvents.value = [];
+    groupChatTargetID.value = "";
+    groupMessages.value = [];
     return;
   }
 
   const previousSelectedGroupID = selectedGroupID.value;
+  const previousGroupChatTargetID = groupChatTargetID.value;
 
   try {
     const [groupsRes, invitesRes, joinRequestsRes] = await Promise.all([
@@ -1113,6 +1293,9 @@ async function loadGroupsData() {
       const memberIDs = groups.value.filter((group) => group.is_member).map((group) => group.id);
       if (!memberIDs.includes(selectedGroupID.value)) {
         selectedGroupID.value = memberIDs[0] || "";
+      }
+      if (!memberIDs.includes(groupChatTargetID.value)) {
+        groupChatTargetID.value = memberIDs[0] || "";
       }
     }
 
@@ -1134,6 +1317,15 @@ async function loadGroupsData() {
 
     if (selectedGroupID.value === previousSelectedGroupID) {
       await loadSelectedGroupContent();
+    }
+
+    if (!groupChatTargetID.value) {
+      groupMessages.value = [];
+      return;
+    }
+
+    if (groupChatTargetID.value === previousGroupChatTargetID) {
+      await loadGroupMessages();
     }
   } catch (_err) {
     // Keep last loaded values to avoid UI flicker.
@@ -1498,6 +1690,402 @@ async function respondGroupJoinRequest(requestID, action) {
   }
 }
 
+async function loadNotifications() {
+  if (!me.value) {
+    notifications.value = [];
+    notificationsUnread.value = 0;
+    return;
+  }
+
+  try {
+    const response = await fetch("/api/notifications", {
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      return;
+    }
+
+    const payload = await response.json();
+    notifications.value = payload.notifications || [];
+    notificationsUnread.value = payload.unread_count || 0;
+  } catch (_err) {
+    // Keep last notifications snapshot on transient failures.
+  }
+}
+
+async function markNotificationRead(notificationID) {
+  loading.value = true;
+  authError.value = "";
+
+  try {
+    const response = await fetch("/api/notifications/read", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({
+        notification_id: notificationID,
+        read_all: false,
+      }),
+    });
+
+    const payload = await response.json();
+    if (!response.ok) {
+      authError.value = payload.error || "Unable to mark this notification as read.";
+      return;
+    }
+
+    notifications.value = notifications.value.map((notification) => {
+      if (notification.id !== notificationID) {
+        return notification;
+      }
+      return {
+        ...notification,
+        is_read: true,
+      };
+    });
+    notificationsUnread.value = payload.unread_count || 0;
+  } catch (_err) {
+    authError.value = "Notification update failed.";
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function markAllNotificationsRead() {
+  loading.value = true;
+  authError.value = "";
+
+  try {
+    const response = await fetch("/api/notifications/read", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({
+        read_all: true,
+      }),
+    });
+
+    const payload = await response.json();
+    if (!response.ok) {
+      authError.value = payload.error || "Unable to mark notifications as read.";
+      return;
+    }
+
+    notifications.value = notifications.value.map((notification) => ({
+      ...notification,
+      is_read: true,
+    }));
+    notificationsUnread.value = payload.unread_count || 0;
+  } catch (_err) {
+    authError.value = "Notifications update failed.";
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function loadPrivateMessages() {
+  if (!me.value || !privateChatTargetID.value) {
+    privateMessages.value = [];
+    return;
+  }
+
+  try {
+    const response = await fetch(`/api/chat/private/messages?user_id=${encodeURIComponent(privateChatTargetID.value)}`, {
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      privateMessages.value = [];
+      return;
+    }
+
+    const payload = await response.json();
+    privateMessages.value = payload.messages || [];
+  } catch (_err) {
+    // Keep previous messages to avoid hard UI resets.
+  }
+}
+
+async function sendPrivateMessage() {
+  const targetID = privateChatTargetID.value;
+  const content = privateMessageDraft.value.trim();
+
+  if (!targetID) {
+    authError.value = "Choose a private chat target first.";
+    return;
+  }
+  if (!content) {
+    authError.value = "Message content is required.";
+    return;
+  }
+
+  loading.value = true;
+  authError.value = "";
+
+  try {
+    const response = await fetch("/api/chat/private/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({
+        recipient_id: targetID,
+        content,
+      }),
+    });
+
+    const payload = await response.json();
+    if (!response.ok) {
+      authError.value = payload.error || "Unable to send private message.";
+      return;
+    }
+
+    const sentMessage = payload.message;
+    if (sentMessage && !privateMessages.value.some((message) => message.id === sentMessage.id)) {
+      privateMessages.value = [...privateMessages.value, sentMessage];
+    }
+    privateMessageDraft.value = "";
+  } catch (_err) {
+    authError.value = "Private message sending failed.";
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function loadGroupMessages() {
+  if (!me.value || !groupChatTargetID.value) {
+    groupMessages.value = [];
+    return;
+  }
+
+  try {
+    const response = await fetch(`/api/chat/groups/messages?group_id=${encodeURIComponent(groupChatTargetID.value)}`, {
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      groupMessages.value = [];
+      return;
+    }
+
+    const payload = await response.json();
+    groupMessages.value = payload.messages || [];
+  } catch (_err) {
+    // Keep previous messages to avoid hard UI resets.
+  }
+}
+
+async function sendGroupMessage() {
+  const groupID = groupChatTargetID.value;
+  const content = groupMessageDraft.value.trim();
+
+  if (!groupID) {
+    authError.value = "Choose a group chat first.";
+    return;
+  }
+  if (!content) {
+    authError.value = "Message content is required.";
+    return;
+  }
+
+  loading.value = true;
+  authError.value = "";
+
+  try {
+    const response = await fetch("/api/chat/groups/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({
+        group_id: groupID,
+        content,
+      }),
+    });
+
+    const payload = await response.json();
+    if (!response.ok) {
+      authError.value = payload.error || "Unable to send group message.";
+      return;
+    }
+
+    const sentMessage = payload.message;
+    if (sentMessage && !groupMessages.value.some((message) => message.id === sentMessage.id)) {
+      groupMessages.value = [...groupMessages.value, sentMessage];
+    }
+    groupMessageDraft.value = "";
+  } catch (_err) {
+    authError.value = "Group message sending failed.";
+  } finally {
+    loading.value = false;
+  }
+}
+
+function closeRealtimeSocket() {
+  if (reconnectTimer) {
+    clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+  }
+
+  if (!realtimeSocket) {
+    return;
+  }
+
+  const socket = realtimeSocket;
+  realtimeSocket = null;
+  socket.onclose = null;
+  socket.onerror = null;
+  socket.onmessage = null;
+  socket.close();
+}
+
+function connectRealtimeSocket() {
+  if (!me.value) {
+    return;
+  }
+
+  if (realtimeSocket && [WebSocket.OPEN, WebSocket.CONNECTING].includes(realtimeSocket.readyState)) {
+    return;
+  }
+
+  if (reconnectTimer) {
+    clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+  }
+
+  const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+  const socket = new WebSocket(`${protocol}://${window.location.host}/api/ws`);
+  realtimeSocket = socket;
+
+  socket.onmessage = (event) => {
+    try {
+      const payload = JSON.parse(event.data);
+      handleRealtimePayload(payload);
+    } catch (_err) {
+      // Ignore malformed realtime payloads.
+    }
+  };
+
+  socket.onerror = () => {
+    socket.close();
+  };
+
+  socket.onclose = () => {
+    if (realtimeSocket === socket) {
+      realtimeSocket = null;
+    }
+
+    if (!me.value) {
+      return;
+    }
+
+    reconnectTimer = setTimeout(() => {
+      connectRealtimeSocket();
+    }, 1500);
+  };
+}
+
+function handleRealtimePayload(payload) {
+  if (!payload || typeof payload !== "object") {
+    return;
+  }
+
+  if (payload.type === "private_message") {
+    maybeAppendPrivateMessage(payload.data);
+    return;
+  }
+
+  if (payload.type === "group_message") {
+    maybeAppendGroupMessage(payload.data);
+    return;
+  }
+
+  if (payload.type === "notification") {
+    prependNotification(payload.data);
+  }
+}
+
+function maybeAppendPrivateMessage(message) {
+  if (!message || !message.id || !me.value || !privateChatTargetID.value) {
+    return;
+  }
+
+  const peerID = privateChatTargetID.value;
+  const involvesPeer = message.sender_id === peerID || message.recipient_id === peerID;
+  const involvesMe = message.sender_id === me.value.id || message.recipient_id === me.value.id;
+  if (!involvesPeer || !involvesMe) {
+    return;
+  }
+
+  if (privateMessages.value.some((existing) => existing.id === message.id)) {
+    return;
+  }
+
+  privateMessages.value = [...privateMessages.value, message];
+}
+
+function maybeAppendGroupMessage(message) {
+  if (!message || !message.id || !groupChatTargetID.value) {
+    return;
+  }
+
+  if (message.group_id !== groupChatTargetID.value) {
+    return;
+  }
+
+  if (groupMessages.value.some((existing) => existing.id === message.id)) {
+    return;
+  }
+
+  groupMessages.value = [...groupMessages.value, message];
+}
+
+function prependNotification(notification) {
+  if (!notification || !notification.id) {
+    return;
+  }
+
+  const existingIndex = notifications.value.findIndex((existing) => existing.id === notification.id);
+  if (existingIndex >= 0) {
+    notifications.value[existingIndex] = {
+      ...notifications.value[existingIndex],
+      ...notification,
+    };
+    return;
+  }
+
+  notifications.value = [notification, ...notifications.value];
+  if (!notification.is_read) {
+    notificationsUnread.value += 1;
+  }
+}
+
+function formatNotification(notification) {
+  const payload = notification?.payload || {};
+
+  if (notification?.type === "follow_request") {
+    return `${payload.requester_name || "Someone"} sent you a follow request`;
+  }
+  if (notification?.type === "group_invite") {
+    return `${payload.inviter_name || "Someone"} invited you to ${payload.group_title || "a group"}`;
+  }
+  if (notification?.type === "group_join_request") {
+    return `${payload.requester_name || "Someone"} requested to join ${payload.group_title || "your group"}`;
+  }
+  if (notification?.type === "group_event_created") {
+    return `${payload.creator_name || "Someone"} created event ${payload.event_title || "in your group"}`;
+  }
+
+  return notification?.type || "notification";
+}
+
 async function submitPost() {
   loading.value = true;
   authError.value = "";
@@ -1594,6 +2182,7 @@ async function logout() {
       credentials: "include",
     });
   } finally {
+    closeRealtimeSocket();
     me.value = null;
     profile.value = null;
     networkUsers.value = [];
@@ -1605,6 +2194,14 @@ async function logout() {
     selectedGroupID.value = "";
     groupPosts.value = [];
     groupEvents.value = [];
+    notifications.value = [];
+    notificationsUnread.value = 0;
+    privateChatTargetID.value = "";
+    privateMessages.value = [];
+    privateMessageDraft.value = "";
+    groupChatTargetID.value = "";
+    groupMessages.value = [];
+    groupMessageDraft.value = "";
     postForm.content = "";
     postForm.privacy = "public";
     postForm.media = null;

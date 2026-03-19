@@ -99,3 +99,19 @@ Utilise ce journal pour garder la trace des choix importants.
 - Decision retenue: Acces activity strictement reserve aux membres (create/list posts, comments, events, vote) avec un seul vote par utilisateur et par event (vote remplacable).
 - Pourquoi: Respect du modele communautaire du sujet, reduction du risque d abus et comportement previsible a auditer.
 - Impact: Controles membership centralises sur les endpoints groups activity et persistance claire du vote dans event_votes.
+
+## D-012 - Chat mandatory via websocket + permissions strictes
+- Date: 2026-03-19
+- Contexte: AQ-CHAT impose du temps reel websocket et des regles d acces prive/groupe.
+- Options considerees: 1) chat HTTP polling 2) websocket avec endpoint dedie.
+- Decision retenue: Endpoint websocket /api/ws pour emission temps reel, plus endpoints HTTP pour persistance/liste des messages.
+- Pourquoi: Respect explicite de la contrainte mandatory websocket tout en gardant une API lisible pour le chargement historique.
+- Impact: Ajout d un hub WS serveur, messages prives autorises seulement si follow mutuel, et messages de groupe reserves aux membres.
+
+## D-013 - Notifications metier poussees en realtime
+- Date: 2026-03-19
+- Contexte: AQ-NOTIF demande des notifications visibles sur les flux sociaux principaux.
+- Options considerees: 1) notifications lues uniquement par polling 2) stockage DB + push WS immediat.
+- Decision retenue: Stockage dans table notifications + push websocket cible vers le user concerne.
+- Pourquoi: Couvrir a la fois la persistance (historique) et l immediatete UX sans dependre uniquement du rafraichissement.
+- Impact: Triggers relies aux actions follow request, group invite, group join request et group event creation, avec endpoint read/all read.
