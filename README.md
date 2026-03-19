@@ -1,7 +1,7 @@
 # Social Network - Working README
 
 ## 1) But du repo
-Ce repo sert a construire le projet social-network pas a pas, de facon propre, testable et explicable devant le prof.
+Ce repo sert a construire le projet social-network pas a pas, de facon propre .
 
 Le scope principal actuel est le mandatory.
 Les bonus ne sont pas pris.
@@ -84,3 +84,15 @@ Si docker compose plugin est indisponible localement, utiliser docker-compose.
 1. docker-compose -f docker-compose.yml up --build
 2. Frontend: http://localhost:3000
 3. Backend health: http://localhost:8080/api/health
+
+## 10) Recap oral soutenance (10 points)
+1. Le projet respecte le scope mandatory a 100 pourcent (bonus et optionnel exclus).
+2. Architecture claire: backend Go, frontend Vue, base SQLite, migrations versionnees.
+3. Authentification par sessions/cookies (register, login, logout, me) avec controle d acces serveur.
+4. Profils publics/prives avec regles de visibilite et gestion followers/follow requests.
+5. Posts/commentaires avec media (jpeg/png/gif) et privacy public/almost_private/private.
+6. Groupes complets: creation, invitations, demandes d entree, accept/decline, membership checks.
+7. Activity de groupe: posts/commentaires internes, events avec options et vote unique par user.
+8. Chat temps reel via websocket: prive (mutual follow) + groupe (membres seulement) + support emojis.
+9. Notifications centralisees (follow request, group invite, join request, event created) avec mark read.
+10. Livraison docker validee: 2 conteneurs up, app accessible via navigateur, preuves audit renseignees.

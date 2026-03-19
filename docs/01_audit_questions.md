@@ -31,7 +31,7 @@ Conseil de remplissage:
 | AQ-BE-001 | Does the backend include a clear separation of responsibilities among its three major parts - Server, App, and Database? | Oui, separation explicite implementee. | backend/cmd/server/main.go ; backend/internal/app/app.go ; backend/pkg/db/sqlite/sqlite.go | READY |
 | AQ-BE-002 | Is there a server that effectively receives incoming requests and serves as the entry point for all requests to the application? | Oui, serveur HTTP Go actif sur APP_PORT avec entree /api/health. | backend/cmd/server/main.go ; curl /api/health | READY |
 | AQ-BE-003 | Does the application (App) running on the server effectively listen for requests, retrieve information from the database, and send responses? | Oui, endpoints auth/profile actifs avec lecture/ecriture DB et reponses JSON. | backend/internal/app/auth.go ; backend/internal/app/profile.go | READY |
-| AQ-BE-004 | Is the core logic of the social network implemented within the App component, including the logic for handling various types of requests based on HTTP or other protocols? | Base posee, logique sociale complete encore a implementer en M2-M5. | backend/internal/app/app.go | WIP |
+| AQ-BE-004 | Is the core logic of the social network implemented within the App component, including the logic for handling various types of requests based on HTTP or other protocols? | Oui, la logique mandatory est implementee dans App (auth, profils, follows, posts, groupes, chat temps reel, notifications). | backend/internal/app/app.go ; backend/internal/app/*.go | VALIDATED |
 
 ## Database
 | ID | Question (copie audit) | Reponse | Preuve | Statut |
