@@ -65,3 +65,11 @@
 - Blocages: Ajustement du script de test pour extraire correctement les IDs JSON (la logique applicative etait correcte).
 - Prochaine etape: Demarrer M4 (groupes + invitations + demandes + events).
 - Questions pour le prof: Aucune.
+
+## Session 2026-03-19 (M4 groupes core)
+- Date: 2026-03-19
+- Objectif de session: Implementer le coeur groupes mandatory (creation, invitations, demandes d entree) et valider AQ-GRP-001 a AQ-GRP-006.
+- Travail fait: Backend groupes ajoute (create/list groups, invites incoming/respond, join requests incoming/respond), regle invitation limitee aux followers de l inviteur, UI frontend ajoutee pour creation groupe + invitation follower + join request + accept/decline.
+- Blocages: Aucun blocage applicatif. Scenario e2e passe sur DB temporaire avec preuves chiffrables.
+- Prochaine etape: Implementer posts/commentaires de groupe puis events + vote (AQ-GRP-007/008/009).
+- Questions pour le prof: Aucune.

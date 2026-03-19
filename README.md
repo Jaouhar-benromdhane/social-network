@@ -16,6 +16,7 @@ Tout ce qui est optionnel est exclu.
 - M1 Architecture: done
 - M2 Auth + Profiles: done
 - M3 Followers + Posts: done
+- M4 Groups + Events: in progress (groups core done, events pending)
 
 ## 3) Documents de suivi
 - docs/00_plan_global.md
@@ -54,11 +55,11 @@ Fin:
 - Faire commit + push
 
 ## 7) Prochaines actions concretes
-1. Demarrer M4: creation de groupes + invitations + demandes d entree.
-2. Implementer posts/commentaires de groupe.
-3. Implementer events de groupe (creation + vote).
-4. Valider les lignes audit Groups.
-5. Continuer la mise a jour du tracker audit apres chaque bloc valide.
+1. Finaliser M4: posts/commentaires de groupe.
+2. Implementer events de groupe (creation + vote).
+3. Valider AQ-GRP-007, AQ-GRP-008 et AQ-GRP-009.
+4. Continuer la mise a jour du tracker audit apres chaque bloc valide.
+5. Ensuite attaquer M5 (chat + notifications).
 
 ## 8) Run local (M1)
 Backend:

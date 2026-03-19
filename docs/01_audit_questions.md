@@ -86,12 +86,12 @@ Conseil de remplissage:
 ## Groups
 | ID | Question (copie audit) | Reponse | Preuve | Statut |
 |---|---|---|---|---|
-| AQ-GRP-001 | Try creating a group. | TODO | TODO | TODO |
-| AQ-GRP-002 | Were you able to invite one of your followers to join the group? | TODO | TODO | TODO |
-| AQ-GRP-003 | Open two browsers, log in with different users on each browser, follow each other and with one of the users create a group and invite the other user. Did the other user received a group invitation that he/she can refuse/accept? | TODO | TODO | TODO |
-| AQ-GRP-004 | Using the same browsers and the same users, with one of the users create a group and with the other try to make a group entering request. Did the owner of the group received a request that he/she can refuse/accept? | TODO | TODO | TODO |
-| AQ-GRP-005 | Can a user make group invitations, after being part of the group (being the user different from the creator of the group)? | TODO | TODO | TODO |
-| AQ-GRP-006 | Can a user make a group entering request (a request to enter a group)? | TODO | TODO | TODO |
+| AQ-GRP-001 | Try creating a group. | Oui, creation de groupe fonctionnelle et creation automatique du membre creator. | GROUP_CREATE_CODE=201 (script test_groups_e2e) | VALIDATED |
+| AQ-GRP-002 | Were you able to invite one of your followers to join the group? | Oui, invitation d un follower vers un groupe effectuee avec statut pending. | INVITE1_CODE=200 et FOLLOWER_SEES_INVITE=1 (script test_groups_e2e) | VALIDATED |
+| AQ-GRP-003 | Open two browsers, log in with different users on each browser, follow each other and with one of the users create a group and invite the other user. Did the other user received a group invitation that he/she can refuse/accept? | Oui, le destinataire voit l invitation et peut accepter/decliner. | FOLLOWER_SEES_INVITE=1 ; ACCEPT1_CODE=200 ; DECLINE_INVITE_CODE=200 (script test_groups_e2e) | VALIDATED |
+| AQ-GRP-004 | Using the same browsers and the same users, with one of the users create a group and with the other try to make a group entering request. Did the owner of the group received a request that he/she can refuse/accept? | Oui, le creator recoit les demandes d entree et peut accepter/decliner. | JOIN_REQ_CODE=200 ; CREATOR_SEES_JOIN1=1 ; ACCEPT_JOIN_CODE=200 ; DECLINE_JOIN_CODE=200 | VALIDATED |
+| AQ-GRP-005 | Can a user make group invitations, after being part of the group (being the user different from the creator of the group)? | Oui, un membre non creator peut inviter ses followers. | MEMBER_INVITE_CODE=200 et OUTSIDER_SEES_INVITE=1 (script test_groups_e2e) | VALIDATED |
+| AQ-GRP-006 | Can a user make a group entering request (a request to enter a group)? | Oui, un utilisateur non membre peut envoyer une demande d entree. | JOIN_REQ_CODE=200 et JOIN_REQ2_CODE=200 (script test_groups_e2e) | VALIDATED |
 | AQ-GRP-007 | After being part of a group, can the user create posts and comment already created posts? | TODO | TODO | TODO |
 | AQ-GRP-008 | Try to create an event in a group. Were you asked for a title, a description, a day/time and at least two options (going, not going)? | TODO | TODO | TODO |
 | AQ-GRP-009 | Using the same browsers and the same users, after both of them becoming part of the same group, create an event with one of them. Is the other user able to see the event and vote in which option he wants? | TODO | TODO | TODO |

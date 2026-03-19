@@ -341,6 +341,131 @@
           <p v-else class="muted">No visible posts yet.</p>
         </section>
 
+        <section class="network">
+          <h3>Groups</h3>
+
+          <form class="form compact-form" @submit.prevent="submitCreateGroup">
+            <label>
+              Group title
+              <input v-model="groupForm.title" type="text" required placeholder="Weekend football" />
+            </label>
+            <label>
+              Group description
+              <textarea
+                v-model="groupForm.description"
+                rows="3"
+                required
+                placeholder="Group purpose and rules"
+              ></textarea>
+            </label>
+
+            <button type="submit" :disabled="loading">{{ loading ? 'Please wait...' : 'Create group' }}</button>
+          </form>
+
+          <div class="group-columns">
+            <article class="connection-block">
+              <h3>My groups</h3>
+
+              <ul v-if="memberGroups.length" class="user-list">
+                <li v-for="group in memberGroups" :key="group.id" class="user-item group-item">
+                  <div>
+                    <strong>{{ group.title }}</strong>
+                    <p class="muted small">{{ group.description }}</p>
+                    <p class="muted small">Members: {{ group.member_count }} | Role: {{ group.member_role || 'member' }}</p>
+                  </div>
+
+                  <div class="user-actions">
+                    <select v-model="groupInviteTargets[group.id]" class="tiny-select">
+                      <option value="">Invite follower...</option>
+                      <option v-for="follower in followerAudience" :key="follower.id" :value="follower.id">
+                        {{ follower.first_name }} {{ follower.last_name }}
+                      </option>
+                    </select>
+                    <button type="button" class="tiny" @click="inviteFollowerToGroup(group.id)">Invite</button>
+                  </div>
+                </li>
+              </ul>
+              <p v-else class="muted">You are not a member of any group yet.</p>
+            </article>
+
+            <article class="connection-block">
+              <h3>Discover groups</h3>
+
+              <ul v-if="discoverGroups.length" class="user-list">
+                <li v-for="group in discoverGroups" :key="group.id" class="user-item group-item">
+                  <div>
+                    <strong>{{ group.title }}</strong>
+                    <p class="muted small">{{ group.description }}</p>
+                    <p class="muted small">Members: {{ group.member_count }}</p>
+                  </div>
+
+                  <div class="user-actions">
+                    <span v-if="group.has_pending_invite" class="pill">Invitation pending</span>
+                    <span v-else-if="group.has_pending_join_request" class="pill pending">Join request pending</span>
+                    <button
+                      v-else
+                      type="button"
+                      class="tiny"
+                      @click="requestJoinGroup(group.id)"
+                    >
+                      Request join
+                    </button>
+                  </div>
+                </li>
+              </ul>
+              <p v-else class="muted">No public groups to discover right now.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="network">
+          <h3>Incoming group invites</h3>
+
+          <ul v-if="groupInvitesIncoming.length" class="user-list">
+            <li v-for="invite in groupInvitesIncoming" :key="invite.id" class="user-item">
+              <div>
+                <strong>{{ invite.group.title }}</strong>
+                <p class="muted small">
+                  Invited by {{ invite.inviter.first_name }} {{ invite.inviter.last_name }}
+                </p>
+              </div>
+
+              <div class="user-actions">
+                <button type="button" class="tiny" @click="respondGroupInvite(invite.id, 'accept')">Accept</button>
+                <button type="button" class="tiny secondary" @click="respondGroupInvite(invite.id, 'decline')">Decline</button>
+              </div>
+            </li>
+          </ul>
+          <p v-else class="muted">No pending group invites.</p>
+        </section>
+
+        <section class="network">
+          <h3>Incoming join requests (creator)</h3>
+
+          <ul v-if="groupJoinRequestsIncoming.length" class="user-list">
+            <li v-for="request in groupJoinRequestsIncoming" :key="request.id" class="user-item">
+              <div>
+                <strong>{{ request.group.title }}</strong>
+                <p class="muted small">
+                  {{ request.requester.first_name }} {{ request.requester.last_name }} wants to join
+                </p>
+              </div>
+
+              <div class="user-actions">
+                <button type="button" class="tiny" @click="respondGroupJoinRequest(request.id, 'accept')">Accept</button>
+                <button
+                  type="button"
+                  class="tiny secondary"
+                  @click="respondGroupJoinRequest(request.id, 'decline')"
+                >
+                  Decline
+                </button>
+              </div>
+            </li>
+          </ul>
+          <p v-else class="muted">No pending join requests for your groups.</p>
+        </section>
+
         <p v-if="authError" class="error">{{ authError }}</p>
       </template>
     </section>
@@ -364,6 +489,9 @@ const profileViewUserID = ref("");
 const profileViewResult = ref(null);
 const profileViewError = ref("");
 const posts = ref([]);
+const groups = ref([]);
+const groupInvitesIncoming = ref([]);
+const groupJoinRequestsIncoming = ref([]);
 
 const postForm = reactive({
   content: "",
@@ -372,8 +500,14 @@ const postForm = reactive({
   allowed_user_ids: [],
 });
 
+const groupForm = reactive({
+  title: "",
+  description: "",
+});
+
 const commentDrafts = reactive({});
 const commentMedia = reactive({});
+const groupInviteTargets = reactive({});
 
 const loginForm = reactive({
   email: "",
@@ -400,6 +534,8 @@ const statusClass = computed(() => {
 
 const avatarUrl = computed(() => me.value?.avatar_path || "");
 const followerAudience = computed(() => profile.value?.followers || []);
+const memberGroups = computed(() => groups.value.filter((group) => group.is_member));
+const discoverGroups = computed(() => groups.value.filter((group) => !group.is_member));
 
 onMounted(async () => {
   await checkHealth();
@@ -429,6 +565,9 @@ async function loadCurrentUser() {
       networkUsers.value = [];
       incomingRequests.value = [];
       posts.value = [];
+      groups.value = [];
+      groupInvitesIncoming.value = [];
+      groupJoinRequestsIncoming.value = [];
       return;
     }
 
@@ -444,6 +583,7 @@ async function loadCurrentUser() {
     await loadMyProfile();
     await loadNetworkData();
     await loadFeed();
+    await loadGroupsData();
   } catch (_err) {
     authError.value = "Unable to reach authentication service.";
   }
@@ -494,6 +634,7 @@ async function submitLogin() {
     await loadMyProfile();
     await loadNetworkData();
     await loadFeed();
+    await loadGroupsData();
   } catch (_err) {
     authError.value = "Login request failed.";
   } finally {
@@ -541,6 +682,7 @@ async function submitRegister() {
     await loadMyProfile();
     await loadNetworkData();
     await loadFeed();
+    await loadGroupsData();
   } catch (_err) {
     authError.value = "Registration request failed.";
   } finally {
@@ -763,6 +905,201 @@ async function loadFeed(userID = "") {
   }
 }
 
+async function loadGroupsData() {
+  if (!me.value) {
+    groups.value = [];
+    groupInvitesIncoming.value = [];
+    groupJoinRequestsIncoming.value = [];
+    return;
+  }
+
+  try {
+    const [groupsRes, invitesRes, joinRequestsRes] = await Promise.all([
+      fetch("/api/groups", { credentials: "include" }),
+      fetch("/api/groups/invites/incoming", { credentials: "include" }),
+      fetch("/api/groups/requests/incoming", { credentials: "include" }),
+    ]);
+
+    if (groupsRes.ok) {
+      const groupsPayload = await groupsRes.json();
+      groups.value = groupsPayload.groups || [];
+    }
+
+    if (invitesRes.ok) {
+      const invitesPayload = await invitesRes.json();
+      groupInvitesIncoming.value = invitesPayload.invites || [];
+    }
+
+    if (joinRequestsRes.ok) {
+      const joinRequestsPayload = await joinRequestsRes.json();
+      groupJoinRequestsIncoming.value = joinRequestsPayload.requests || [];
+    }
+  } catch (_err) {
+    // Keep last loaded values to avoid UI flicker.
+  }
+}
+
+async function submitCreateGroup() {
+  loading.value = true;
+  authError.value = "";
+
+  try {
+    const response = await fetch("/api/groups", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({
+        title: groupForm.title,
+        description: groupForm.description,
+      }),
+    });
+
+    const payload = await response.json();
+    if (!response.ok) {
+      authError.value = payload.error || "Unable to create group.";
+      return;
+    }
+
+    groupForm.title = "";
+    groupForm.description = "";
+    await loadGroupsData();
+  } catch (_err) {
+    authError.value = "Group creation failed.";
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function inviteFollowerToGroup(groupID) {
+  const inviteeID = (groupInviteTargets[groupID] || "").trim();
+  if (!inviteeID) {
+    authError.value = "Select a follower before inviting.";
+    return;
+  }
+
+  loading.value = true;
+  authError.value = "";
+
+  try {
+    const response = await fetch("/api/groups/invites", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({
+        group_id: groupID,
+        invitee_id: inviteeID,
+      }),
+    });
+
+    const payload = await response.json();
+    if (!response.ok) {
+      authError.value = payload.error || "Unable to invite this user.";
+      return;
+    }
+
+    groupInviteTargets[groupID] = "";
+    await loadGroupsData();
+  } catch (_err) {
+    authError.value = "Group invitation failed.";
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function requestJoinGroup(groupID) {
+  loading.value = true;
+  authError.value = "";
+
+  try {
+    const response = await fetch("/api/groups/requests/join", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({ group_id: groupID }),
+    });
+
+    const payload = await response.json();
+    if (!response.ok) {
+      authError.value = payload.error || "Unable to request group join.";
+      return;
+    }
+
+    await loadGroupsData();
+  } catch (_err) {
+    authError.value = "Join request failed.";
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function respondGroupInvite(requestID, action) {
+  loading.value = true;
+  authError.value = "";
+
+  try {
+    const response = await fetch("/api/groups/invites/respond", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({
+        request_id: requestID,
+        action,
+      }),
+    });
+
+    const payload = await response.json();
+    if (!response.ok) {
+      authError.value = payload.error || "Unable to process group invite.";
+      return;
+    }
+
+    await loadGroupsData();
+  } catch (_err) {
+    authError.value = "Failed to respond to group invite.";
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function respondGroupJoinRequest(requestID, action) {
+  loading.value = true;
+  authError.value = "";
+
+  try {
+    const response = await fetch("/api/groups/requests/respond", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({
+        request_id: requestID,
+        action,
+      }),
+    });
+
+    const payload = await response.json();
+    if (!response.ok) {
+      authError.value = payload.error || "Unable to process join request.";
+      return;
+    }
+
+    await loadGroupsData();
+  } catch (_err) {
+    authError.value = "Failed to respond to join request.";
+  } finally {
+    loading.value = false;
+  }
+}
+
 async function submitPost() {
   loading.value = true;
   authError.value = "";
@@ -864,10 +1201,15 @@ async function logout() {
     networkUsers.value = [];
     incomingRequests.value = [];
     posts.value = [];
+    groups.value = [];
+    groupInvitesIncoming.value = [];
+    groupJoinRequestsIncoming.value = [];
     postForm.content = "";
     postForm.privacy = "public";
     postForm.media = null;
     postForm.allowed_user_ids = [];
+    groupForm.title = "";
+    groupForm.description = "";
     profileViewUserID.value = "";
     profileViewResult.value = null;
     profileViewError.value = "";

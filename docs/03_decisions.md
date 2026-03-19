@@ -83,3 +83,11 @@ Utilise ce journal pour garder la trace des choix importants.
 - Decision retenue: Controle applicatif centralise avec 3 modes (public, almost_private, private) + table post_allowed_users pour le mode private.
 - Pourquoi: Plus lisible, plus facile a auditer et a faire evoluer avec les regles followers deja en place.
 - Impact: Nouveaux endpoints /api/posts* ; UI feed/commentaires ; private restreint aux followers selectionnes.
+
+## D-010 - Workflow groupes: invitation et demande d entree
+- Date: 2026-03-19
+- Contexte: AQ-GRP-001 a AQ-GRP-006 imposent un cycle complet creation/invitation/join request avec reponses accept/decline.
+- Options considerees: 1) invitation libre de n importe quel utilisateur 2) invitation limitee aux followers de l inviteur.
+- Decision retenue: Invitation reservee aux followers de l inviteur, et ouverture join request pour les non membres.
+- Pourquoi: Conforme au wording audit (invite one of your followers) tout en laissant un chemin d entree via join request.
+- Impact: Endpoints /api/groups/* ajoutes + UI de gestion groupes/invitations/demandes cote frontend.

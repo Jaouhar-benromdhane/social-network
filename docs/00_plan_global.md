@@ -19,7 +19,7 @@ Contraintes:
 | M1 - Architecture | Poser la base technique backend/frontend/db/docker | Arborescence, scripts, migrations sqlite, run local | Le projet demarre et migre la DB | DONE |
 | M2 - Auth + Profiles | Implementer inscription, login, session, profil public/prive | Formulaires, middleware session, pages profils | Scenarios auth/profiles valides | DONE |
 | M3 - Followers + Posts | Implementer suivi + posts/commentaires avec privacy | Follow requests, feed, permissions de visibilite | Scenarios followers/posts valides | DONE |
-| M4 - Groups + Events | Implementer groupes, invitations, demandes, events | Groupes, demandes entree, vote event | Scenarios groupes/evenements valides | TODO |
+| M4 - Groups + Events | Implementer groupes, invitations, demandes, events | Groupes, demandes entree, vote event | Scenarios groupes/evenements valides | WIP |
 | M5 - Chat + Notifications | Implementer chat prive/groupe temps reel + notifications | WS hub, canaux prive/groupe, centre notif global | Scenarios chat/notifs valides | TODO |
 | M6 - Docker + Audit final | Stabiliser et valider tout l audit mandatory | 2 images/containers, checklist finalisee | Passage checklist mandatory complet | TODO |
 
