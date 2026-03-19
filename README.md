@@ -16,7 +16,7 @@ Tout ce qui est optionnel est exclu.
 - M1 Architecture: done
 - M2 Auth + Profiles: done
 - M3 Followers + Posts: done
-- M4 Groups + Events: in progress (groups core done, events pending)
+- M4 Groups + Events: done
 
 ## 3) Documents de suivi
 - docs/00_plan_global.md
@@ -55,11 +55,11 @@ Fin:
 - Faire commit + push
 
 ## 7) Prochaines actions concretes
-1. Finaliser M4: posts/commentaires de groupe.
-2. Implementer events de groupe (creation + vote).
-3. Valider AQ-GRP-007, AQ-GRP-008 et AQ-GRP-009.
-4. Continuer la mise a jour du tracker audit apres chaque bloc valide.
-5. Ensuite attaquer M5 (chat + notifications).
+1. Demarrer M5: chat prive en temps reel.
+2. Etendre au chat de groupe temps reel.
+3. Ajouter le centre de notifications global.
+4. Valider les lignes AQ-CHAT et AQ-NOTIF avec scenarios multi navigateurs.
+5. Finaliser M6 docker + verification audit complete.
 
 ## 8) Run local (M1)
 Backend:

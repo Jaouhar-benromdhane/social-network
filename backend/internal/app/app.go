@@ -83,6 +83,10 @@ func (a *App) Routes() http.Handler {
 	mux.HandleFunc("/api/groups/requests/join", a.handleCreateGroupJoinRequest)
 	mux.HandleFunc("/api/groups/requests/incoming", a.handleIncomingGroupJoinRequests)
 	mux.HandleFunc("/api/groups/requests/respond", a.handleRespondGroupJoinRequest)
+	mux.HandleFunc("/api/groups/posts", a.handleGroupPosts)
+	mux.HandleFunc("/api/groups/posts/comments", a.handleCreateGroupComment)
+	mux.HandleFunc("/api/groups/events", a.handleGroupEvents)
+	mux.HandleFunc("/api/groups/events/vote", a.handleVoteGroupEvent)
 	mux.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir(a.uploadDir))))
 	return withCORS(mux)
 }

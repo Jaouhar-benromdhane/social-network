@@ -436,6 +436,13 @@ button.secondary {
   align-items: flex-start;
 }
 
+.group-options {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .tiny-select {
   width: 190px;
   min-width: 190px;
@@ -469,5 +476,9 @@ button.secondary {
   .tiny-select {
     width: 100%;
     min-width: 0;
+  }
+
+  .group-options {
+    justify-content: flex-start;
   }
 }

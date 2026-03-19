@@ -419,6 +419,161 @@
         </section>
 
         <section class="network">
+          <h3>Selected Group Activity</h3>
+
+          <label>
+            Group
+            <select v-model="selectedGroupID">
+              <option value="">Choose one of your groups...</option>
+              <option v-for="group in memberGroups" :key="group.id" :value="group.id">
+                {{ group.title }}
+              </option>
+            </select>
+          </label>
+
+          <template v-if="selectedGroupID">
+            <div class="group-columns">
+              <article class="connection-block">
+                <h3>Create group post</h3>
+
+                <form class="form compact-form" @submit.prevent="submitGroupPost">
+                  <label>
+                    Content
+                    <textarea
+                      v-model="groupPostForm.content"
+                      rows="3"
+                      placeholder="Share something with your group..."
+                    ></textarea>
+                  </label>
+                  <label>
+                    Image / GIF (optional)
+                    <input type="file" accept="image/jpeg,image/png,image/gif" @change="onGroupPostMediaChange" />
+                  </label>
+                  <button type="submit" :disabled="loading">{{ loading ? 'Please wait...' : 'Create group post' }}</button>
+                </form>
+
+                <h3>Group posts</h3>
+                <ul v-if="groupPosts.length" class="post-list">
+                  <li v-for="post in groupPosts" :key="post.id" class="post-item">
+                    <header class="post-head">
+                      <div>
+                        <strong>{{ post.author.first_name }} {{ post.author.last_name }}</strong>
+                        <p class="muted small">{{ formatDate(post.created_at) }}</p>
+                      </div>
+                    </header>
+
+                    <p v-if="post.content" class="post-content">{{ post.content }}</p>
+                    <img v-if="post.media_path" class="post-media" :src="post.media_path" alt="group post media" />
+
+                    <div class="comment-block">
+                      <h4>Comments ({{ post.comments?.length || 0 }})</h4>
+
+                      <ul v-if="post.comments?.length" class="comment-list">
+                        <li v-for="comment in post.comments" :key="comment.id" class="comment-item">
+                          <p class="small">
+                            <strong>{{ comment.author.first_name }} {{ comment.author.last_name }}</strong>
+                            · {{ formatDate(comment.created_at) }}
+                          </p>
+                          <p v-if="comment.content" class="comment-content">{{ comment.content }}</p>
+                          <img
+                            v-if="comment.media_path"
+                            class="comment-media"
+                            :src="comment.media_path"
+                            alt="group comment media"
+                          />
+                        </li>
+                      </ul>
+                      <p v-else class="muted small">No comments yet.</p>
+
+                      <form class="comment-form" @submit.prevent="submitGroupComment(post.id)">
+                        <textarea
+                          v-model="groupCommentDrafts[post.id]"
+                          rows="2"
+                          placeholder="Write a group comment (or upload media)..."
+                        ></textarea>
+                        <div class="comment-actions">
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png,image/gif"
+                            @change="onGroupCommentMediaChange(post.id, $event)"
+                          />
+                          <button type="submit" class="tiny" :disabled="loading">Comment</button>
+                        </div>
+                      </form>
+                    </div>
+                  </li>
+                </ul>
+                <p v-else class="muted">No group posts yet.</p>
+              </article>
+
+              <article class="connection-block">
+                <h3>Create group event</h3>
+
+                <form class="form compact-form" @submit.prevent="submitGroupEvent">
+                  <label>
+                    Title
+                    <input v-model="groupEventForm.title" type="text" required placeholder="Friday meetup" />
+                  </label>
+                  <label>
+                    Description
+                    <textarea
+                      v-model="groupEventForm.description"
+                      rows="2"
+                      required
+                      placeholder="Where and what is planned"
+                    ></textarea>
+                  </label>
+                  <label>
+                    Day / Time
+                    <input v-model="groupEventForm.event_datetime" type="datetime-local" required />
+                  </label>
+                  <label>
+                    Option 1
+                    <input v-model="groupEventForm.option_one" type="text" required placeholder="Going" />
+                  </label>
+                  <label>
+                    Option 2
+                    <input v-model="groupEventForm.option_two" type="text" required placeholder="Not going" />
+                  </label>
+                  <label>
+                    Option 3 (optional)
+                    <input v-model="groupEventForm.option_three" type="text" placeholder="Maybe" />
+                  </label>
+                  <button type="submit" :disabled="loading">{{ loading ? 'Please wait...' : 'Create event' }}</button>
+                </form>
+
+                <h3>Group events</h3>
+                <ul v-if="groupEvents.length" class="user-list">
+                  <li v-for="event in groupEvents" :key="event.id" class="user-item group-item">
+                    <div>
+                      <strong>{{ event.title }}</strong>
+                      <p class="muted small">{{ event.description }}</p>
+                      <p class="muted small">{{ formatDate(event.event_datetime) }}</p>
+                    </div>
+
+                    <div class="group-options">
+                      <button
+                        v-for="option in event.options"
+                        :key="option.id"
+                        type="button"
+                        class="tiny"
+                        :class="{ secondary: event.my_vote_option_id === option.id }"
+                        @click="voteGroupEvent(event.id, option.id)"
+                      >
+                        {{ option.label }} ({{ option.vote_count }})
+                      </button>
+                    </div>
+                  </li>
+                </ul>
+                <p v-else class="muted">No events yet.</p>
+              </article>
+            </div>
+          </template>
+
+          <p v-else class="muted">Join or create a group to manage group posts and events.</p>
+        </section>
+
+        <section class="network">
           <h3>Incoming group invites</h3>
 
           <ul v-if="groupInvitesIncoming.length" class="user-list">
@@ -473,7 +628,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from "vue";
+import { computed, onMounted, reactive, ref, watch } from "vue";
 
 const status = ref("checking");
 const error = ref("");
@@ -492,6 +647,9 @@ const posts = ref([]);
 const groups = ref([]);
 const groupInvitesIncoming = ref([]);
 const groupJoinRequestsIncoming = ref([]);
+const selectedGroupID = ref("");
+const groupPosts = ref([]);
+const groupEvents = ref([]);
 
 const postForm = reactive({
   content: "",
@@ -500,14 +658,30 @@ const postForm = reactive({
   allowed_user_ids: [],
 });
 
+const groupPostForm = reactive({
+  content: "",
+  media: null,
+});
+
 const groupForm = reactive({
   title: "",
   description: "",
 });
 
+const groupEventForm = reactive({
+  title: "",
+  description: "",
+  event_datetime: "",
+  option_one: "Going",
+  option_two: "Not going",
+  option_three: "",
+});
+
 const commentDrafts = reactive({});
 const commentMedia = reactive({});
 const groupInviteTargets = reactive({});
+const groupCommentDrafts = reactive({});
+const groupCommentMedia = reactive({});
 
 const loginForm = reactive({
   email: "",
@@ -542,6 +716,10 @@ onMounted(async () => {
   await loadCurrentUser();
 });
 
+watch(selectedGroupID, async () => {
+  await loadSelectedGroupContent();
+});
+
 async function checkHealth() {
   try {
     const response = await fetch("/api/health");
@@ -568,6 +746,9 @@ async function loadCurrentUser() {
       groups.value = [];
       groupInvitesIncoming.value = [];
       groupJoinRequestsIncoming.value = [];
+      selectedGroupID.value = "";
+      groupPosts.value = [];
+      groupEvents.value = [];
       return;
     }
 
@@ -910,8 +1091,13 @@ async function loadGroupsData() {
     groups.value = [];
     groupInvitesIncoming.value = [];
     groupJoinRequestsIncoming.value = [];
+    selectedGroupID.value = "";
+    groupPosts.value = [];
+    groupEvents.value = [];
     return;
   }
+
+  const previousSelectedGroupID = selectedGroupID.value;
 
   try {
     const [groupsRes, invitesRes, joinRequestsRes] = await Promise.all([
@@ -923,6 +1109,11 @@ async function loadGroupsData() {
     if (groupsRes.ok) {
       const groupsPayload = await groupsRes.json();
       groups.value = groupsPayload.groups || [];
+
+      const memberIDs = groups.value.filter((group) => group.is_member).map((group) => group.id);
+      if (!memberIDs.includes(selectedGroupID.value)) {
+        selectedGroupID.value = memberIDs[0] || "";
+      }
     }
 
     if (invitesRes.ok) {
@@ -934,8 +1125,215 @@ async function loadGroupsData() {
       const joinRequestsPayload = await joinRequestsRes.json();
       groupJoinRequestsIncoming.value = joinRequestsPayload.requests || [];
     }
+
+    if (!selectedGroupID.value) {
+      groupPosts.value = [];
+      groupEvents.value = [];
+      return;
+    }
+
+    if (selectedGroupID.value === previousSelectedGroupID) {
+      await loadSelectedGroupContent();
+    }
   } catch (_err) {
     // Keep last loaded values to avoid UI flicker.
+  }
+}
+
+function onGroupPostMediaChange(event) {
+  const [file] = event.target.files || [];
+  groupPostForm.media = file || null;
+}
+
+function onGroupCommentMediaChange(groupPostID, event) {
+  const [file] = event.target.files || [];
+  groupCommentMedia[groupPostID] = file || null;
+}
+
+async function loadSelectedGroupContent() {
+  const groupID = selectedGroupID.value;
+  if (!groupID) {
+    groupPosts.value = [];
+    groupEvents.value = [];
+    return;
+  }
+
+  try {
+    const [postsRes, eventsRes] = await Promise.all([
+      fetch(`/api/groups/posts?group_id=${encodeURIComponent(groupID)}`, { credentials: "include" }),
+      fetch(`/api/groups/events?group_id=${encodeURIComponent(groupID)}`, { credentials: "include" }),
+    ]);
+
+    if (postsRes.ok) {
+      const postsPayload = await postsRes.json();
+      groupPosts.value = postsPayload.posts || [];
+    }
+
+    if (eventsRes.ok) {
+      const eventsPayload = await eventsRes.json();
+      groupEvents.value = eventsPayload.events || [];
+    }
+  } catch (_err) {
+    // Keep last successful content rendering.
+  }
+}
+
+async function submitGroupPost() {
+  const groupID = selectedGroupID.value;
+  if (!groupID) {
+    authError.value = "Select a group first.";
+    return;
+  }
+
+  loading.value = true;
+  authError.value = "";
+
+  try {
+    const form = new FormData();
+    form.set("group_id", groupID);
+    form.set("content", groupPostForm.content || "");
+    if (groupPostForm.media) {
+      form.set("media", groupPostForm.media);
+    }
+
+    const response = await fetch("/api/groups/posts", {
+      method: "POST",
+      body: form,
+      credentials: "include",
+    });
+
+    const payload = await response.json();
+    if (!response.ok) {
+      authError.value = payload.error || "Unable to create group post.";
+      return;
+    }
+
+    groupPostForm.content = "";
+    groupPostForm.media = null;
+    await loadSelectedGroupContent();
+  } catch (_err) {
+    authError.value = "Group post creation failed.";
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function submitGroupComment(groupPostID) {
+  loading.value = true;
+  authError.value = "";
+
+  try {
+    const form = new FormData();
+    form.set("group_post_id", groupPostID);
+    form.set("content", groupCommentDrafts[groupPostID] || "");
+    if (groupCommentMedia[groupPostID]) {
+      form.set("media", groupCommentMedia[groupPostID]);
+    }
+
+    const response = await fetch("/api/groups/posts/comments", {
+      method: "POST",
+      body: form,
+      credentials: "include",
+    });
+
+    const payload = await response.json();
+    if (!response.ok) {
+      authError.value = payload.error || "Unable to create group comment.";
+      return;
+    }
+
+    groupCommentDrafts[groupPostID] = "";
+    groupCommentMedia[groupPostID] = null;
+    await loadSelectedGroupContent();
+  } catch (_err) {
+    authError.value = "Group comment creation failed.";
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function submitGroupEvent() {
+  const groupID = selectedGroupID.value;
+  if (!groupID) {
+    authError.value = "Select a group first.";
+    return;
+  }
+
+  loading.value = true;
+  authError.value = "";
+
+  try {
+    const options = [
+      groupEventForm.option_one,
+      groupEventForm.option_two,
+      groupEventForm.option_three,
+    ]
+      .map((option) => option.trim())
+      .filter((option) => option.length > 0);
+
+    const response = await fetch("/api/groups/events", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({
+        group_id: groupID,
+        title: groupEventForm.title,
+        description: groupEventForm.description,
+        event_datetime: groupEventForm.event_datetime,
+        options,
+      }),
+    });
+
+    const payload = await response.json();
+    if (!response.ok) {
+      authError.value = payload.error || "Unable to create event.";
+      return;
+    }
+
+    groupEventForm.title = "";
+    groupEventForm.description = "";
+    groupEventForm.event_datetime = "";
+    groupEventForm.option_one = "Going";
+    groupEventForm.option_two = "Not going";
+    groupEventForm.option_three = "";
+    await loadSelectedGroupContent();
+  } catch (_err) {
+    authError.value = "Event creation failed.";
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function voteGroupEvent(eventID, optionID) {
+  loading.value = true;
+  authError.value = "";
+
+  try {
+    const response = await fetch("/api/groups/events/vote", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({
+        event_id: eventID,
+        option_id: optionID,
+      }),
+    });
+
+    const payload = await response.json();
+    if (!response.ok) {
+      authError.value = payload.error || "Unable to vote for this option.";
+      return;
+    }
+
+    await loadSelectedGroupContent();
+  } catch (_err) {
+    authError.value = "Event vote failed.";
+  } finally {
+    loading.value = false;
   }
 }
 
@@ -1204,12 +1602,23 @@ async function logout() {
     groups.value = [];
     groupInvitesIncoming.value = [];
     groupJoinRequestsIncoming.value = [];
+    selectedGroupID.value = "";
+    groupPosts.value = [];
+    groupEvents.value = [];
     postForm.content = "";
     postForm.privacy = "public";
     postForm.media = null;
     postForm.allowed_user_ids = [];
+    groupPostForm.content = "";
+    groupPostForm.media = null;
     groupForm.title = "";
     groupForm.description = "";
+    groupEventForm.title = "";
+    groupEventForm.description = "";
+    groupEventForm.event_datetime = "";
+    groupEventForm.option_one = "Going";
+    groupEventForm.option_two = "Not going";
+    groupEventForm.option_three = "";
     profileViewUserID.value = "";
     profileViewResult.value = null;
     profileViewError.value = "";

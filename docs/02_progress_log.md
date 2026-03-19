@@ -73,3 +73,11 @@
 - Blocages: Aucun blocage applicatif. Scenario e2e passe sur DB temporaire avec preuves chiffrables.
 - Prochaine etape: Implementer posts/commentaires de groupe puis events + vote (AQ-GRP-007/008/009).
 - Questions pour le prof: Aucune.
+
+## Session 2026-03-19 (M4 group activity done)
+- Date: 2026-03-19
+- Objectif de session: Finaliser M4 avec posts/commentaires de groupe et events avec vote.
+- Travail fait: Endpoints backend ajoutes pour group posts/comments/events/vote, controles membership appliques, UI frontend ajoutee pour gerer activite du groupe selectionne, et scenarios e2e validates pour AQ-GRP-007/008/009.
+- Blocages: Aucun blocage fonctionnel. Une modification locale inattendue a ete verifiee puis l etat git a ete nettoye avant finalisation.
+- Prochaine etape: Demarrer M5 (chat + notifications temps reel).
+- Questions pour le prof: Aucune.

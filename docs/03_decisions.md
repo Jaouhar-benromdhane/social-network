@@ -91,3 +91,11 @@ Utilise ce journal pour garder la trace des choix importants.
 - Decision retenue: Invitation reservee aux followers de l inviteur, et ouverture join request pour les non membres.
 - Pourquoi: Conforme au wording audit (invite one of your followers) tout en laissant un chemin d entree via join request.
 - Impact: Endpoints /api/groups/* ajoutes + UI de gestion groupes/invitations/demandes cote frontend.
+
+## D-011 - Activity de groupe reservee aux membres + vote unique
+- Date: 2026-03-19
+- Contexte: AQ-GRP-007/008/009 exigent posts/commentaires de groupe et events avec vote fiable entre plusieurs utilisateurs.
+- Options considerees: 1) autoriser lecture/ecriture activity a tout utilisateur connecte 2) restreindre strictement aux membres du groupe.
+- Decision retenue: Acces activity strictement reserve aux membres (create/list posts, comments, events, vote) avec un seul vote par utilisateur et par event (vote remplacable).
+- Pourquoi: Respect du modele communautaire du sujet, reduction du risque d abus et comportement previsible a auditer.
+- Impact: Controles membership centralises sur les endpoints groups activity et persistance claire du vote dans event_votes.
