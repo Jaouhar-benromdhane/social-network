@@ -133,6 +133,14 @@ func (a *App) handleCreateGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if userIDs, err := a.loadAllUserIDs(r.Context()); err == nil {
+		a.pushRealtimeEventToUsers(userIDs, "groups_updated", map[string]any{
+			"reason":   "group_created",
+			"group_id": groupID,
+			"actor_id": currentUser.ID,
+		})
+	}
+
 	writeJSON(w, http.StatusCreated, map[string]groupItem{"group": group})
 }
 
@@ -249,6 +257,13 @@ func (a *App) handleCreateGroupInvite(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{
 		"invite_id": inviteID,
 		"status":    status,
+	})
+
+	a.pushRealtimeEventToUsers([]string{currentUser.ID, req.InviteeID}, "groups_updated", map[string]any{
+		"reason":    "group_invite_created",
+		"group_id":  req.GroupID,
+		"invite_id": inviteID,
+		"actor_id":  currentUser.ID,
 	})
 }
 
@@ -421,6 +436,14 @@ func (a *App) handleRespondGroupInvite(w http.ResponseWriter, r *http.Request) {
 		"request_id": req.RequestID,
 		"status":     newStatus,
 	})
+
+	a.pushRealtimeEventToUsers([]string{currentUser.ID}, "groups_updated", map[string]any{
+		"reason":     "group_invite_responded",
+		"group_id":   groupID,
+		"request_id": req.RequestID,
+		"status":     newStatus,
+		"actor_id":   currentUser.ID,
+	})
 }
 
 func (a *App) handleCreateGroupJoinRequest(w http.ResponseWriter, r *http.Request) {
@@ -499,6 +522,15 @@ func (a *App) handleCreateGroupJoinRequest(w http.ResponseWriter, r *http.Reques
 		"request_id": requestID,
 		"status":     status,
 	})
+
+	if creatorID != "" {
+		a.pushRealtimeEventToUsers([]string{currentUser.ID, creatorID}, "groups_updated", map[string]any{
+			"reason":     "group_join_requested",
+			"group_id":   req.GroupID,
+			"request_id": requestID,
+			"actor_id":   currentUser.ID,
+		})
+	}
 }
 
 func (a *App) handleIncomingGroupJoinRequests(w http.ResponseWriter, r *http.Request) {
@@ -670,6 +702,14 @@ func (a *App) handleRespondGroupJoinRequest(w http.ResponseWriter, r *http.Reque
 	writeJSON(w, http.StatusOK, map[string]string{
 		"request_id": req.RequestID,
 		"status":     newStatus,
+	})
+
+	a.pushRealtimeEventToUsers([]string{currentUser.ID, requesterID}, "groups_updated", map[string]any{
+		"reason":     "group_join_responded",
+		"group_id":   groupID,
+		"request_id": req.RequestID,
+		"status":     newStatus,
+		"actor_id":   currentUser.ID,
 	})
 }
 

@@ -16,12 +16,12 @@ body {
 .layout {
   min-height: 100vh;
   display: grid;
-  place-items: center;
+  place-items: start center;
   padding: 24px;
 }
 
 .card {
-  width: min(760px, 100%);
+  width: min(980px, 100%);
   background: #ffffff;
   border: 1px solid #dce7f5;
   border-radius: 16px;
@@ -171,7 +171,8 @@ button.secondary {
 .connection-block {
   border: 1px solid #d6e0ef;
   border-radius: 10px;
-  padding: 10px 12px;
+  padding: 12px 14px;
+  background: #fcfdff;
 }
 
 .connection-block h3 {
@@ -209,10 +210,22 @@ button.secondary {
   gap: 6px;
 }
 
+.page-nav {
+  margin-top: 14px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.page-nav .tab {
+  border-radius: 999px;
+  border: 1px solid #cfdaeb;
+}
+
 .network {
   margin-top: 18px;
   border-top: 1px solid #dce5f3;
-  padding-top: 14px;
+  padding-top: 16px;
 }
 
 .network h3 {
@@ -240,11 +253,36 @@ button.secondary {
 .user-item {
   border: 1px solid #d5dfed;
   border-radius: 10px;
-  padding: 10px 12px;
+  padding: 12px 14px;
   display: flex;
   justify-content: space-between;
   gap: 12px;
   align-items: center;
+  background: #fbfdff;
+}
+
+.profile-preview {
+  margin-top: 14px;
+  border: 1px solid #d7e2f1;
+  border-radius: 14px;
+  padding: 14px;
+  background: linear-gradient(180deg, #fbfdff, #f6f9ff);
+  display: grid;
+  gap: 12px;
+}
+
+.profile-preview .name {
+  font-size: 1.15rem;
+}
+
+.preview-posts {
+  border-top: 1px solid #dce5f3;
+  padding-top: 12px;
+}
+
+.preview-posts h4 {
+  margin: 0 0 8px;
+  font-size: 0.98rem;
 }
 
 .user-actions {
@@ -508,6 +546,11 @@ button.secondary {
 
   .inline-form {
     grid-template-columns: 1fr;
+  }
+
+  .page-nav {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
   }
 
   .post-head {

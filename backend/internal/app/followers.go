@@ -193,6 +193,17 @@ func (a *App) handleCreateFollowRequest(w http.ResponseWriter, r *http.Request) 
 				AND status = 'pending'
 		`, currentUser.ID, targetUser.ID)
 
+		requesterName := strings.TrimSpace(currentUser.FirstName + " " + currentUser.LastName)
+		if requesterName == "" {
+			requesterName = currentUser.Email
+		}
+		_ = a.pushNotification(r.Context(), targetUser.ID, "follow_request", map[string]any{
+			"requester_id":       currentUser.ID,
+			"requester_name":     requesterName,
+			"requester_nickname": currentUser.Nickname,
+			"auto_followed":      true,
+		})
+
 		writeJSON(w, http.StatusOK, map[string]any{
 			"status":        "following",
 			"auto_followed": true,
@@ -380,6 +391,23 @@ func (a *App) handleRespondFollowRequest(w http.ResponseWriter, r *http.Request)
 	if err := tx.Commit(); err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to commit follow response")
 		return
+	}
+
+	responderName := strings.TrimSpace(currentUser.FirstName + " " + currentUser.LastName)
+	if responderName == "" {
+		responderName = currentUser.Email
+	}
+
+	if req.Action == "accept" {
+		_ = a.pushNotification(r.Context(), requesterID, "follow_request_accepted", map[string]any{
+			"target_id":   currentUser.ID,
+			"target_name": responderName,
+		})
+	} else {
+		_ = a.pushNotification(r.Context(), requesterID, "follow_request_declined", map[string]any{
+			"target_id":   currentUser.ID,
+			"target_name": responderName,
+		})
 	}
 
 	writeJSON(w, http.StatusOK, map[string]string{

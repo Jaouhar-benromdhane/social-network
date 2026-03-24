@@ -158,6 +158,19 @@ func (a *App) handleCreatePrivateMessage(w http.ResponseWriter, r *http.Request)
 		"data": message,
 	})
 
+	senderName := strings.TrimSpace(currentUser.FirstName + " " + currentUser.LastName)
+	if senderName == "" {
+		senderName = currentUser.Email
+	}
+
+	_ = a.pushNotification(r.Context(), req.RecipientID, "private_message_received", map[string]any{
+		"message_id":   message.ID,
+		"sender_id":    currentUser.ID,
+		"sender_name":  senderName,
+		"content":      message.Content,
+		"recipient_id": req.RecipientID,
+	})
+
 	writeJSON(w, http.StatusCreated, map[string]chatMessageItem{"message": message})
 }
 
@@ -260,6 +273,19 @@ func (a *App) handleCreateGroupMessage(w http.ResponseWriter, r *http.Request) {
 
 	memberIDs, err := a.loadGroupMemberIDs(r, req.GroupID)
 	if err == nil {
+		senderName := strings.TrimSpace(currentUser.FirstName + " " + currentUser.LastName)
+		if senderName == "" {
+			senderName = currentUser.Email
+		}
+
+		groupTitle := ""
+		_ = a.db.QueryRowContext(r.Context(), `
+			SELECT title
+			FROM groups
+			WHERE id = ?
+			LIMIT 1
+		`, req.GroupID).Scan(&groupTitle)
+
 		targets := make([]string, 0, len(memberIDs))
 		for _, memberID := range memberIDs {
 			if memberID != currentUser.ID {
@@ -270,6 +296,17 @@ func (a *App) handleCreateGroupMessage(w http.ResponseWriter, r *http.Request) {
 			"type": "group_message",
 			"data": message,
 		})
+
+		for _, targetID := range targets {
+			_ = a.pushNotification(r.Context(), targetID, "group_message_received", map[string]any{
+				"message_id":  message.ID,
+				"group_id":    req.GroupID,
+				"group_title": groupTitle,
+				"sender_id":   currentUser.ID,
+				"sender_name": senderName,
+				"content":     message.Content,
+			})
+		}
 	}
 
 	writeJSON(w, http.StatusCreated, map[string]chatMessageItem{"message": message})

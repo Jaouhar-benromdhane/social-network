@@ -143,6 +143,15 @@ func (a *App) handleCreateGroupPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if memberIDs, err := a.loadGroupMemberIDs(r, groupID); err == nil {
+		a.pushRealtimeEventToUsers(memberIDs, "groups_updated", map[string]any{
+			"reason":        "group_post_created",
+			"group_id":      groupID,
+			"group_post_id": groupPostID,
+			"actor_id":      currentUser.ID,
+		})
+	}
+
 	writeJSON(w, http.StatusCreated, map[string]groupPostItem{"post": post})
 }
 
@@ -283,6 +292,16 @@ func (a *App) handleCreateGroupComment(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
+	if memberIDs, err := a.loadGroupMemberIDs(r, groupID); err == nil {
+		a.pushRealtimeEventToUsers(memberIDs, "groups_updated", map[string]any{
+			"reason":           "group_post_commented",
+			"group_id":         groupID,
+			"group_post_id":    groupPostID,
+			"group_comment_id": groupCommentID,
+			"actor_id":         currentUser.ID,
+		})
+	}
+
 	writeJSON(w, http.StatusCreated, map[string]groupCommentItem{"comment": comment})
 }
 
@@ -415,6 +434,14 @@ func (a *App) handleCreateGroupEvent(w http.ResponseWriter, r *http.Request) {
 				"creator_nickname": currentUser.Nickname,
 			})
 		}
+
+		a.pushRealtimeEventToUsers(memberIDs, "groups_updated", map[string]any{
+			"reason":      "group_event_created",
+			"group_id":    req.GroupID,
+			"event_id":    event.ID,
+			"actor_id":    currentUser.ID,
+			"event_title": event.Title,
+		})
 	}
 
 	writeJSON(w, http.StatusCreated, map[string]groupEventItem{"event": event})

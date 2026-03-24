@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"crypto/sha1"
 	"encoding/base64"
 	"encoding/binary"
@@ -90,6 +91,39 @@ func (h *wsHub) sendToUsers(userIDs []string, message any) {
 		seen[trimmed] = struct{}{}
 		h.sendToUser(trimmed, message)
 	}
+}
+
+func (a *App) pushRealtimeEventToUsers(userIDs []string, eventType string, data map[string]any) {
+	if strings.TrimSpace(eventType) == "" {
+		return
+	}
+
+	a.wsHub.sendToUsers(userIDs, map[string]any{
+		"type": eventType,
+		"data": data,
+	})
+}
+
+func (a *App) loadAllUserIDs(ctx context.Context) ([]string, error) {
+	rows, err := a.db.QueryContext(ctx, `
+		SELECT id
+		FROM users
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	userIDs := make([]string, 0)
+	for rows.Next() {
+		var userID string
+		if err := rows.Scan(&userID); err != nil {
+			return nil, err
+		}
+		userIDs = append(userIDs, userID)
+	}
+
+	return userIDs, rows.Err()
 }
 
 func (c *wsClient) sendJSON(message any) error {

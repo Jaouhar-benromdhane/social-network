@@ -211,7 +211,18 @@ func (a *App) handleLogout(w http.ResponseWriter, r *http.Request) {
 
 	cookie, err := r.Cookie(sessionCookieName)
 	if err == nil && cookie.Value != "" {
-		_ = a.deleteSessionByToken(r.Context(), cookie.Value)
+		var userID string
+		err = a.db.QueryRowContext(r.Context(), `
+			SELECT user_id
+			FROM sessions
+			WHERE session_token = ?
+			LIMIT 1
+		`, cookie.Value).Scan(&userID)
+		if err == nil && strings.TrimSpace(userID) != "" {
+			_ = a.deleteSessionsByUserID(r.Context(), userID)
+		} else {
+			_ = a.deleteSessionByToken(r.Context(), cookie.Value)
+		}
 	}
 	a.clearSessionCookie(w)
 
@@ -290,6 +301,11 @@ func (a *App) createSession(ctx context.Context, userID string) (string, time.Ti
 
 func (a *App) deleteSessionByToken(ctx context.Context, token string) error {
 	_, err := a.db.ExecContext(ctx, `DELETE FROM sessions WHERE session_token = ?`, token)
+	return err
+}
+
+func (a *App) deleteSessionsByUserID(ctx context.Context, userID string) error {
+	_, err := a.db.ExecContext(ctx, `DELETE FROM sessions WHERE user_id = ?`, userID)
 	return err
 }
 

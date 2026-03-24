@@ -164,7 +164,22 @@
           <button type="button" class="secondary" @click="logout" :disabled="loading">Logout</button>
         </div>
 
-        <section class="network">
+        <nav class="page-nav" aria-label="App pages">
+          <button type="button" class="tab" :class="{ active: activePage === 'profile' }" @click="setActivePage('profile')">
+            Profile
+          </button>
+          <button type="button" class="tab" :class="{ active: activePage === 'posts' }" @click="setActivePage('posts')">
+            Posts
+          </button>
+          <button type="button" class="tab" :class="{ active: activePage === 'groups' }" @click="setActivePage('groups')">
+            Groups
+          </button>
+          <button type="button" class="tab" :class="{ active: activePage === 'chat' }" @click="setActivePage('chat')">
+            Chat & Notifications
+          </button>
+        </nav>
+
+        <section v-if="activePage === 'profile'" class="network">
           <h3>Discover users</h3>
           <p class="muted">Use this section to test follow requests, auto-follow public profiles, accept or decline requests, and unfollow.</p>
 
@@ -197,13 +212,22 @@
                 >
                   Unfollow
                 </button>
+
+                <button
+                  v-if="!user.is_self && (user.profile_visibility === 'public' || user.is_following)"
+                  type="button"
+                  class="tiny secondary"
+                  @click="viewProfileFromUserCard(user.id)"
+                >
+                  View profile
+                </button>
               </div>
             </li>
           </ul>
           <p v-else class="muted">No users available yet.</p>
         </section>
 
-        <section class="network">
+        <section v-if="activePage === 'profile'" class="network">
           <h3>Incoming follow requests</h3>
 
           <ul v-if="incomingRequests.length" class="user-list">
@@ -222,9 +246,9 @@
           <p v-else class="muted">No pending requests.</p>
         </section>
 
-        <section class="network">
-          <h3>Profile visibility check</h3>
-          <p class="muted">Paste a user ID and test private/public profile access.</p>
+        <section v-if="activePage === 'profile'" class="network">
+          <h3>Profile preview</h3>
+          <p class="muted">Paste a user ID to open a full preview of that profile.</p>
 
           <div class="inline-form">
             <input v-model="profileViewUserID" type="text" placeholder="Target user id" />
@@ -232,14 +256,71 @@
           </div>
 
           <p v-if="profileViewError" class="error">{{ profileViewError }}</p>
-          <p v-if="profileViewResult" class="muted">
-            Profile visible: {{ profileViewResult.user.first_name }} {{ profileViewResult.user.last_name }}
-            ({{ profileViewResult.user.profile_visibility }})
-            | visible posts: {{ profileViewResult.posts?.length ?? 0 }}
-          </p>
+
+          <article v-if="profileViewResult" class="profile-preview">
+            <header class="profile-head">
+              <img v-if="profileViewResult.user.avatar_path" class="avatar" :src="profileViewResult.user.avatar_path" alt="profile avatar" />
+              <div>
+                <h3 class="name">{{ profileViewResult.user.first_name }} {{ profileViewResult.user.last_name }}</h3>
+                <p class="subline">{{ profileViewResult.user.email }}</p>
+                <p v-if="profileViewResult.user.nickname" class="subline">@{{ profileViewResult.user.nickname }}</p>
+              </div>
+            </header>
+
+            <div class="profile-grid">
+              <p><strong>Visibility:</strong> {{ profileViewResult.user.profile_visibility }}</p>
+              <p><strong>Followers:</strong> {{ profileViewResult.stats?.followers ?? 0 }}</p>
+              <p><strong>Following:</strong> {{ profileViewResult.stats?.following ?? 0 }}</p>
+              <p><strong>Visible posts:</strong> {{ profileViewResult.posts?.length ?? 0 }}</p>
+            </div>
+
+            <p v-if="profileViewResult.user.about_me" class="about">{{ profileViewResult.user.about_me }}</p>
+
+            <div class="connections">
+              <article class="connection-block">
+                <h3>Followers</h3>
+                <ul v-if="profileViewResult.followers?.length" class="mini-list">
+                  <li v-for="follower in profileViewResult.followers" :key="follower.id">
+                    {{ follower.first_name }} {{ follower.last_name }}
+                  </li>
+                </ul>
+                <p v-else class="muted">No followers yet.</p>
+              </article>
+
+              <article class="connection-block">
+                <h3>Following</h3>
+                <ul v-if="profileViewResult.following?.length" class="mini-list">
+                  <li v-for="followed in profileViewResult.following" :key="followed.id">
+                    {{ followed.first_name }} {{ followed.last_name }}
+                  </li>
+                </ul>
+                <p v-else class="muted">Not following anyone yet.</p>
+              </article>
+            </div>
+
+            <div class="preview-posts">
+              <h4>Visible posts</h4>
+
+              <ul v-if="profileViewResult.posts?.length" class="post-list">
+                <li v-for="post in profileViewResult.posts" :key="post.id" class="post-item">
+                  <header class="post-head">
+                    <div>
+                      <strong>{{ post.author.first_name }} {{ post.author.last_name }}</strong>
+                      <p class="muted small">{{ formatDate(post.created_at) }}</p>
+                    </div>
+                    <span class="pill">{{ post.privacy }}</span>
+                  </header>
+
+                  <p v-if="post.content" class="post-content">{{ post.content }}</p>
+                  <img v-if="post.media_path" class="post-media" :src="post.media_path" alt="post media" />
+                </li>
+              </ul>
+              <p v-else class="muted">No visible posts for this profile.</p>
+            </div>
+          </article>
         </section>
 
-        <section class="network">
+        <section v-if="activePage === 'posts'" class="network">
           <h3>Create post</h3>
           <form class="form compact-form" @submit.prevent="submitPost">
             <label>
@@ -276,7 +357,7 @@
           </form>
         </section>
 
-        <section class="network">
+        <section v-if="activePage === 'posts'" class="network">
           <h3>Feed</h3>
           <p class="muted">Posts visible to your current account based on privacy rules.</p>
 
@@ -341,7 +422,7 @@
           <p v-else class="muted">No visible posts yet.</p>
         </section>
 
-        <section class="network">
+        <section v-if="activePage === 'groups'" class="network">
           <h3>Groups</h3>
 
           <form class="form compact-form" @submit.prevent="submitCreateGroup">
@@ -418,7 +499,7 @@
           </div>
         </section>
 
-        <section class="network">
+        <section v-if="activePage === 'groups'" class="network">
           <h3>Selected Group Activity</h3>
 
           <label>
@@ -573,7 +654,7 @@
           <p v-else class="muted">Join or create a group to manage group posts and events.</p>
         </section>
 
-        <section class="network">
+        <section v-if="activePage === 'groups'" class="network">
           <h3>Incoming group invites</h3>
 
           <ul v-if="groupInvitesIncoming.length" class="user-list">
@@ -594,7 +675,7 @@
           <p v-else class="muted">No pending group invites.</p>
         </section>
 
-        <section class="network">
+        <section v-if="activePage === 'groups'" class="network">
           <h3>Incoming join requests (creator)</h3>
 
           <ul v-if="groupJoinRequestsIncoming.length" class="user-list">
@@ -621,7 +702,7 @@
           <p v-else class="muted">No pending join requests for your groups.</p>
         </section>
 
-        <section class="network">
+        <section v-if="activePage === 'chat'" class="network">
           <h3>Notifications</h3>
 
           <div class="user-actions">
@@ -661,7 +742,7 @@
           <p v-else class="muted">No notifications yet.</p>
         </section>
 
-        <section class="network">
+        <section v-if="activePage === 'chat'" class="network">
           <h3>Private chat</h3>
           <p class="muted">Private chat is enabled only when both users follow each other.</p>
 
@@ -705,7 +786,7 @@
           <p v-else class="muted">Choose one mutual follower to start chatting.</p>
         </section>
 
-        <section class="network">
+        <section v-if="activePage === 'chat'" class="network">
           <h3>Group chat</h3>
 
           <label>
@@ -785,9 +866,32 @@ const privateMessageDraft = ref("");
 const groupChatTargetID = ref("");
 const groupMessages = ref([]);
 const groupMessageDraft = ref("");
+const activePage = ref("profile");
+
+const appPages = new Set(["profile", "posts", "groups", "chat"]);
+
+function setActivePage(page) {
+  if (!appPages.has(page)) {
+    return;
+  }
+  activePage.value = page;
+}
+
+function syncPageFromHash() {
+  const hash = window.location.hash || "";
+  const page = hash.startsWith("#/") ? hash.slice(2) : "";
+  if (appPages.has(page)) {
+    activePage.value = page;
+  }
+}
+
+function onHashChange() {
+  syncPageFromHash();
+}
 
 let realtimeSocket = null;
 let reconnectTimer = null;
+let activityPollTimer = null;
 
 const postForm = reactive({
   content: "",
@@ -856,12 +960,23 @@ const mutualChatUsers = computed(() => {
 });
 
 onMounted(async () => {
+  syncPageFromHash();
+  window.addEventListener("hashchange", onHashChange);
   await checkHealth();
   await loadCurrentUser();
 });
 
 onUnmounted(() => {
+  stopActivityPolling();
+  window.removeEventListener("hashchange", onHashChange);
   closeRealtimeSocket();
+});
+
+watch(activePage, (page) => {
+  const nextHash = `#/${page}`;
+  if (window.location.hash !== nextHash) {
+    history.replaceState(null, "", nextHash);
+  }
 });
 
 watch(selectedGroupID, async () => {
@@ -894,6 +1009,7 @@ async function loadCurrentUser() {
     });
 
     if (response.status === 401) {
+      stopActivityPolling();
       closeRealtimeSocket();
       me.value = null;
       profile.value = null;
@@ -932,9 +1048,52 @@ async function loadCurrentUser() {
     await loadGroupsData();
     await loadNotifications();
     connectRealtimeSocket();
+    startActivityPolling();
   } catch (_err) {
     authError.value = "Unable to reach authentication service.";
   }
+}
+
+function startActivityPolling() {
+  stopActivityPolling();
+
+  if (!me.value) {
+    return;
+  }
+
+  activityPollTimer = setInterval(async () => {
+    if (!me.value) {
+      return;
+    }
+
+    if (activePage.value === "profile") {
+      await Promise.allSettled([loadNetworkData(), loadMyProfile()]);
+      return;
+    }
+
+    if (activePage.value === "posts") {
+      await loadFeed();
+      return;
+    }
+
+    if (activePage.value === "groups") {
+      await loadGroupsData();
+      return;
+    }
+
+    if (activePage.value === "chat") {
+      await Promise.allSettled([loadNotifications(), loadPrivateMessages(), loadGroupMessages()]);
+    }
+  }, 5000);
+}
+
+function stopActivityPolling() {
+  if (!activityPollTimer) {
+    return;
+  }
+
+  clearInterval(activityPollTimer);
+  activityPollTimer = null;
 }
 
 async function loadMyProfile() {
@@ -991,6 +1150,7 @@ async function submitLogin() {
     await loadGroupsData();
     await loadNotifications();
     connectRealtimeSocket();
+    startActivityPolling();
   } catch (_err) {
     authError.value = "Login request failed.";
   } finally {
@@ -1041,6 +1201,7 @@ async function submitRegister() {
     await loadGroupsData();
     await loadNotifications();
     connectRealtimeSocket();
+    startActivityPolling();
   } catch (_err) {
     authError.value = "Registration request failed.";
   } finally {
@@ -1228,6 +1389,11 @@ async function viewOtherProfile() {
   } catch (_err) {
     profileViewError.value = "Profile lookup failed.";
   }
+}
+
+async function viewProfileFromUserCard(userID) {
+  profileViewUserID.value = userID;
+  await viewOtherProfile();
 }
 
 function onPostMediaChange(event) {
@@ -2009,6 +2175,40 @@ function handleRealtimePayload(payload) {
 
   if (payload.type === "notification") {
     prependNotification(payload.data);
+    void refreshFromNotification(payload.data);
+    return;
+  }
+
+  if (payload.type === "feed_updated") {
+    void loadFeed();
+    return;
+  }
+
+  if (payload.type === "groups_updated") {
+    void Promise.allSettled([loadGroupsData(), loadSelectedGroupContent()]);
+  }
+}
+
+async function refreshFromNotification(notification) {
+  const type = notification?.type;
+
+  if (type === "follow_request" || type === "follow_request_accepted" || type === "follow_request_declined") {
+    await Promise.allSettled([loadNetworkData(), loadMyProfile()]);
+    return;
+  }
+
+  if (type === "group_invite" || type === "group_join_request" || type === "group_event_created") {
+    await loadGroupsData();
+    return;
+  }
+
+  if (type === "private_message_received") {
+    await Promise.allSettled([loadNotifications(), loadPrivateMessages()]);
+    return;
+  }
+
+  if (type === "group_message_received") {
+    await Promise.allSettled([loadNotifications(), loadGroupMessages()]);
   }
 }
 
@@ -2072,6 +2272,18 @@ function formatNotification(notification) {
 
   if (notification?.type === "follow_request") {
     return `${payload.requester_name || "Someone"} sent you a follow request`;
+  }
+  if (notification?.type === "follow_request_accepted") {
+    return `${payload.target_name || "Someone"} accepted your follow request`;
+  }
+  if (notification?.type === "follow_request_declined") {
+    return `${payload.target_name || "Someone"} declined your follow request`;
+  }
+  if (notification?.type === "private_message_received") {
+    return `${payload.sender_name || "Someone"} sent you a private message`;
+  }
+  if (notification?.type === "group_message_received") {
+    return `${payload.sender_name || "Someone"} sent a message in ${payload.group_title || "your group"}`;
   }
   if (notification?.type === "group_invite") {
     return `${payload.inviter_name || "Someone"} invited you to ${payload.group_title || "a group"}`;
@@ -2182,6 +2394,7 @@ async function logout() {
       credentials: "include",
     });
   } finally {
+    stopActivityPolling();
     closeRealtimeSocket();
     me.value = null;
     profile.value = null;

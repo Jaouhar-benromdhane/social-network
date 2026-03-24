@@ -161,6 +161,15 @@ func (a *App) handleCreatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if userIDs, err := a.loadAllUserIDs(r.Context()); err == nil {
+		a.pushRealtimeEventToUsers(userIDs, "feed_updated", map[string]any{
+			"reason":    "post_created",
+			"post_id":   postID,
+			"author_id": currentUser.ID,
+			"privacy":   privacy,
+		})
+	}
+
 	writeJSON(w, http.StatusCreated, map[string]postItem{"post": post})
 }
 
@@ -257,6 +266,15 @@ func (a *App) handleCreateComment(w http.ResponseWriter, r *http.Request) {
 			AvatarPath: currentUser.AvatarPath,
 			Nickname:   currentUser.Nickname,
 		},
+	}
+
+	if userIDs, err := a.loadAllUserIDs(r.Context()); err == nil {
+		a.pushRealtimeEventToUsers(userIDs, "feed_updated", map[string]any{
+			"reason":     "post_commented",
+			"post_id":    postID,
+			"comment_id": commentID,
+			"author_id":  currentUser.ID,
+		})
 	}
 
 	writeJSON(w, http.StatusCreated, map[string]commentItem{"comment": comment})

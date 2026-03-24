@@ -1,98 +1,93 @@
-# Social Network - Working README
+# Social Network
 
-## 1) But du repo
-Ce repo sert a construire le projet social-network pas a pas, de facon propre .
+Projet de reseau social (mandatory) avec backend Go, frontend Vue 3 et base SQLite.
 
-Le scope principal actuel est le mandatory.
-Les bonus ne sont pas pris.
-Tout ce qui est optionnel est exclu.
+Le projet couvre:
+- authentification par session
+- profils publics/prives + systeme de follow
+- posts/commentaires avec medias
+- groupes (invites, demandes d acces, activite)
+- chat prive/groupe en temps reel
+- notifications en temps reel
 
-## 2) Etat actuel
-- Sujet mandatory recu: oui
-- Audit mandatory recu: oui
-- Questionnaire mandatory recu: oui
-- Bonus: hors scope
-- Optionnel app-image: hors scope
-- M1 Architecture: done
-- M2 Auth + Profiles: done
-- M3 Followers + Posts: done
-- M4 Groups + Events: done
-- M5 Chat + Notifications: done
-- M6 Docker + Audit final: done
+## Stack technique
+- Backend: Go
+- Frontend: Vue 3 + Vite
+- Base de donnees: SQLite
+- Realtime: WebSocket
+- Conteneurisation: Docker + docker compose
 
-## 3) Documents de suivi
-- docs/00_plan_global.md
-- docs/01_audit_questions.md
-- docs/02_progress_log.md
-- docs/03_decisions.md
-- docs/04_git_strategy.md
+## Lancer le projet (recommande)
+Depuis la racine du repo:
 
-## 4) Methode de travail (pas a pas)
-1. Transformer chaque exigence en tache testable.
-2. Lier chaque tache a une ou plusieurs questions d audit.
-3. Construire une milestone a la fois.
-4. Verifier en local avec scenarios navigateur multiples.
-5. Mettre a jour la preuve dans la checklist audit.
-6. Faire un commit propre par grosse partie.
-7. Push et journaliser la session.
+```bash
+./server.sh start
+```
 
-## 5) Definition de termine
-Une partie est terminee si:
-- le code fonctionne
-- la logique est comprise
-- l explication orale est prete
-- les questions d audit liees sont repondues
-- un commit clair est fait
+Arret:
 
-## 6) Routine de debut/fin de session
-Debut:
-- Lire docs/02_progress_log.md (derniere session)
-- Lire docs/01_audit_questions.md (questions ouvertes)
-- Choisir un objectif concret de session
+```bash
+./server.sh stop
+```
 
-Fin:
-- Mettre a jour docs/02_progress_log.md
-- Cocher ce qui est valide dans docs/01_audit_questions.md
-- Noter les decisions dans docs/03_decisions.md
-- Faire commit + push
+Redemarrage:
 
-## 7) Prochaines actions concretes
-1. Geler la version de soutenance (tag/release local).
-2. Repasser un smoke test complet avant presentation.
-3. Garder les scripts e2e de preuve a disposition.
-4. Verifier les ports libres et l environnement demo le jour J.
-5. Presenter les preuves audit par milestone.
+```bash
+./server.sh restart
+```
 
-## 8) Run local (M1)
+Etat:
+
+```bash
+./server.sh status
+```
+
+Acces:
+- Frontend: http://localhost:3000
+- Backend health: http://localhost:8080/api/health
+
+## Lancer manuellement (sans script)
+```bash
+docker compose -f docker-compose.yml up --build
+```
+
+Si `docker compose` n est pas disponible:
+```bash
+docker-compose -f docker-compose.yml up --build
+```
+
+## Lancer en dev local (hors Docker)
 Backend:
-1. cd backend
-2. go run ./cmd/server
+```bash
+cd backend
+go run ./cmd/server
+```
 
 Frontend:
-1. cd frontend
-2. npm install
-3. npm run dev
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-Verification rapide:
-1. Ouvrir http://localhost:5173
-2. Verifier que le statut API devient ok
-3. Verifier http://localhost:8080/api/health
+## Fonctionnalites principales
+- Register / login / logout / session persistante
+- Profils publics/prives avec controle d acces
+- Follow direct (profil public) ou follow request (profil prive)
+- Feed avec posts `public`, `almost_private`, `private`
+- Commentaires et upload media (jpg/png/gif)
+- Groupes: creation, invitation, demande de join, moderation
+- Activite groupe: posts, commentaires, events, votes
+- Chat prive (mutual follow requis)
+- Chat groupe (membre requis)
+- Notifications et mises a jour temps reel
 
-## 9) Run Docker (M1)
-Si docker compose plugin est indisponible localement, utiliser docker-compose.
+## Notes utiles pour la soutenance
+- Checklist audit rapide: [docs/05_audit_final_checklist.md](docs/05_audit_final_checklist.md)
+- Script de pilotage serveur: [server.sh](server.sh)
 
-1. docker-compose -f docker-compose.yml up --build
-2. Frontend: http://localhost:3000
-3. Backend health: http://localhost:8080/api/health
-
-## 10) Recap oral soutenance (10 points)
-1. Le projet respecte le scope mandatory a 100 pourcent (bonus et optionnel exclus).
-2. Architecture claire: backend Go, frontend Vue, base SQLite, migrations versionnees.
-3. Authentification par sessions/cookies (register, login, logout, me) avec controle d acces serveur.
-4. Profils publics/prives avec regles de visibilite et gestion followers/follow requests.
-5. Posts/commentaires avec media (jpeg/png/gif) et privacy public/almost_private/private.
-6. Groupes complets: creation, invitations, demandes d entree, accept/decline, membership checks.
-7. Activity de groupe: posts/commentaires internes, events avec options et vote unique par user.
-8. Chat temps reel via websocket: prive (mutual follow) + groupe (membres seulement) + support emojis.
-9. Notifications centralisees (follow request, group invite, join request, event created) avec mark read.
-10. Livraison docker validee: 2 conteneurs up, app accessible via navigateur, preuves audit renseignees.
+## Structure du repo
+- `backend/`: API Go, logique metier, DB
+- `frontend/`: application Vue
+- `docs/`: documentation de suivi et checklist
+- `docker-compose.yml`: orchestration backend/frontend
