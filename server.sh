@@ -106,8 +106,30 @@ restart_server() {
   start_server
 }
 
+build_images() {
+  detect_compose_cmd || return 1
+
+  echo "Construction des images Docker (backend + frontend)..."
+  if run_compose build --no-cache backend frontend; then
+    echo ""
+    echo "Images construites avec succes:"
+    docker images | grep -E "social-network" || true
+    echo ""
+    echo "Vous pouvez maintenant lancer: ./server.sh start"
+  else
+    echo "Echec de la construction des images."
+    return 1
+  fi
+}
+
 usage() {
-  echo "Usage: ./server.sh {start|stop|restart|status}"
+  echo "Usage: ./server.sh {build|start|stop|restart|status}"
+  echo ""
+  echo "  build   - Construit les images Docker backend et frontend"
+  echo "  start   - Demarre les conteneurs"
+  echo "  stop    - Arrete les conteneurs"
+  echo "  restart - Redémarre les conteneurs"
+  echo "  status  - Affiche l'etat des conteneurs"
 }
 
 main() {
@@ -117,6 +139,9 @@ main() {
   fi
 
   case "$1" in
+    build)
+      build_images
+      ;;
     start)
       start_server
       ;;

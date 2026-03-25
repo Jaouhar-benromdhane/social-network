@@ -163,7 +163,6 @@
           <button type="button" @click="updateVisibility" :disabled="loading">Update visibility</button>
           <button type="button" class="secondary" @click="logout" :disabled="loading">Logout</button>
         </div>
-
         <nav class="page-nav" aria-label="App pages">
           <button type="button" class="tab" :class="{ active: activePage === 'profile' }" @click="setActivePage('profile')">
             Profile
@@ -174,8 +173,9 @@
           <button type="button" class="tab" :class="{ active: activePage === 'groups' }" @click="setActivePage('groups')">
             Groups
           </button>
-          <button type="button" class="tab" :class="{ active: activePage === 'chat' }" @click="setActivePage('chat')">
-            Chat & Notifications
+          <button type="button" class="tab notif-tab" :class="{ active: activePage === 'chat' }" @click="setActivePage('chat')">
+            Chat &amp; Notifications
+            <span v-if="notificationsUnread > 0" class="nav-badge" aria-label="unread notifications">{{ notificationsUnread }}</span>
           </button>
         </nav>
 
@@ -952,11 +952,20 @@ const avatarUrl = computed(() => me.value?.avatar_path || "");
 const followerAudience = computed(() => profile.value?.followers || []);
 const memberGroups = computed(() => groups.value.filter((group) => group.is_member));
 const discoverGroups = computed(() => groups.value.filter((group) => !group.is_member));
+// Subject rule: chat is allowed when at least one user follows the other.
+// So we include anyone we follow OR anyone who follows us (union, no duplicates).
 const mutualChatUsers = computed(() => {
   const followers = profile.value?.followers || [];
   const following = profile.value?.following || [];
-  const followingIDs = new Set(following.map((user) => user.id));
-  return followers.filter((user) => followingIDs.has(user.id));
+  const seen = new Set();
+  const users = [];
+  for (const u of [...followers, ...following]) {
+    if (!seen.has(u.id)) {
+      seen.add(u.id);
+      users.push(u);
+    }
+  }
+  return users;
 });
 
 onMounted(async () => {
@@ -1066,6 +1075,9 @@ function startActivityPolling() {
       return;
     }
 
+    // Always poll notifications so the badge stays current on every page
+    await loadNotifications();
+
     if (activePage.value === "profile") {
       await Promise.allSettled([loadNetworkData(), loadMyProfile()]);
       return;
@@ -1082,7 +1094,7 @@ function startActivityPolling() {
     }
 
     if (activePage.value === "chat") {
-      await Promise.allSettled([loadNotifications(), loadPrivateMessages(), loadGroupMessages()]);
+      await Promise.allSettled([loadPrivateMessages(), loadGroupMessages()]);
     }
   }, 5000);
 }
@@ -1215,6 +1227,13 @@ function onAvatarChange(event) {
 }
 
 async function updateVisibility() {
+  const newVis = visibility.value;
+  const label = newVis === 'public' ? 'public' : 'private';
+  if (!confirm(`Are you sure you want to make your profile ${label}?`)) {
+    // Revert select to current saved value
+    visibility.value = me.value?.profile_visibility || 'public';
+    return;
+  }
   loading.value = true;
   authError.value = "";
 
@@ -1302,6 +1321,9 @@ async function sendFollowRequest(targetUserID) {
 }
 
 async function unfollowUser(targetUserID) {
+  if (!confirm('Are you sure you want to unfollow this user?')) {
+    return;
+  }
   loading.value = true;
   authError.value = "";
 

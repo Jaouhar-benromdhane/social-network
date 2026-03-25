@@ -317,23 +317,22 @@ func (a *App) canPrivateChat(r *http.Request, userA, userB string) (bool, error)
 		return false, nil
 	}
 
+	// The subject requires at least ONE of the users to be following the other
+	// ("users that they are following or being followed").
 	aFollowsB, err := a.isFollowing(r, userA, userB)
 	if err != nil {
 		return false, err
 	}
-	if !aFollowsB {
-		return false, nil
+	if aFollowsB {
+		return true, nil
 	}
 
 	bFollowsA, err := a.isFollowing(r, userB, userA)
 	if err != nil {
 		return false, err
 	}
-	if !bFollowsA {
-		return false, nil
-	}
 
-	return true, nil
+	return bFollowsA, nil
 }
 
 func (a *App) loadPrivateMessagesBetween(r *http.Request, userA, userB string) ([]chatMessageItem, error) {

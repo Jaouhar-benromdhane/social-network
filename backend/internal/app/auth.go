@@ -40,11 +40,11 @@ func (a *App) handleRegister(w http.ResponseWriter, r *http.Request) {
 
 	email := normalizeEmail(r.FormValue("email"))
 	password := strings.TrimSpace(r.FormValue("password"))
-	firstName := strings.TrimSpace(r.FormValue("first_name"))
-	lastName := strings.TrimSpace(r.FormValue("last_name"))
+	firstName := sanitizeInput(r.FormValue("first_name"))
+	lastName := sanitizeInput(r.FormValue("last_name"))
 	dateOfBirth := strings.TrimSpace(r.FormValue("date_of_birth"))
-	nickname := r.FormValue("nickname")
-	aboutMe := r.FormValue("about_me")
+	nickname := sanitizeInput(r.FormValue("nickname"))
+	aboutMe := sanitizeInput(r.FormValue("about_me"))
 	visibility := strings.TrimSpace(r.FormValue("profile_visibility"))
 	if visibility == "" {
 		visibility = "public"

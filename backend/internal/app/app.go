@@ -4,11 +4,62 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"html"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
+	"sync"
 	"time"
 )
+
+// ─── Rate Limiter ────────────────────────────────────────────────────────────
+
+type rateLimiter struct {
+	mu       sync.Mutex
+	hits     map[string][]time.Time
+	max      int
+	window   time.Duration
+}
+
+func newRateLimiter(max int, window time.Duration) *rateLimiter {
+	return &rateLimiter{
+		hits:   make(map[string][]time.Time),
+		max:    max,
+		window: window,
+	}
+}
+
+func (rl *rateLimiter) allow(key string) bool {
+	rl.mu.Lock()
+	defer rl.mu.Unlock()
+
+	now := time.Now()
+	cutoff := now.Add(-rl.window)
+
+	// Keep only hits within the window
+	filtered := rl.hits[key][:0]
+	for _, t := range rl.hits[key] {
+		if t.After(cutoff) {
+			filtered = append(filtered, t)
+		}
+	}
+	rl.hits[key] = filtered
+
+	if len(rl.hits[key]) >= rl.max {
+		return false
+	}
+	rl.hits[key] = append(rl.hits[key], now)
+	return true
+}
+
+// ─── Sanitize ────────────────────────────────────────────────────────────────
+
+// sanitizeInput strips HTML tags from user-supplied text to prevent stored XSS.
+func sanitizeInput(s string) string {
+	// html.EscapeString converts < > & " ' so scripts can never be executed.
+	return html.EscapeString(strings.TrimSpace(s))
+}
 
 // App wires HTTP routes with shared dependencies.
 type App struct {
@@ -16,6 +67,7 @@ type App struct {
 	uploadDir       string
 	sessionDuration time.Duration
 	wsHub           *wsHub
+	loginLimiter    *rateLimiter
 }
 
 // Config controls runtime app behavior.
@@ -56,6 +108,8 @@ func New(db *sql.DB, cfg Config) (*App, error) {
 		uploadDir:       uploadDir,
 		sessionDuration: sessionDuration,
 		wsHub:           newWSHub(),
+		// 10 login attempts per minute per IP
+		loginLimiter: newRateLimiter(10, time.Minute),
 	}, nil
 }
 
@@ -63,7 +117,7 @@ func (a *App) Routes() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/health", a.handleHealth)
 	mux.HandleFunc("/api/auth/register", a.handleRegister)
-	mux.HandleFunc("/api/auth/login", a.handleLogin)
+	mux.HandleFunc("/api/auth/login", a.rateLimitedLogin)
 	mux.HandleFunc("/api/auth/logout", a.handleLogout)
 	mux.HandleFunc("/api/auth/me", a.handleMe)
 	mux.HandleFunc("/api/users", a.handleListUsers)
@@ -95,7 +149,22 @@ func (a *App) Routes() http.Handler {
 	mux.HandleFunc("/api/notifications", a.handleNotifications)
 	mux.HandleFunc("/api/notifications/read", a.handleMarkNotificationsRead)
 	mux.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir(a.uploadDir))))
-	return withCORS(mux)
+	return withSecurityHeaders(withCORS(mux))
+}
+
+// rateLimitedLogin wraps handleLogin with IP-based rate limiting.
+func (a *App) rateLimitedLogin(w http.ResponseWriter, r *http.Request) {
+	// Extract IP (strip port)
+	ip := r.RemoteAddr
+	if idx := strings.LastIndex(ip, ":"); idx != -1 {
+		ip = ip[:idx]
+	}
+	if !a.loginLimiter.allow(ip) {
+		w.Header().Set("Retry-After", "60")
+		writeError(w, http.StatusTooManyRequests, "too many login attempts, please try again in a minute")
+		return
+	}
+	a.handleLogin(w, r)
 }
 
 func (a *App) handleHealth(w http.ResponseWriter, r *http.Request) {
@@ -138,12 +207,19 @@ func isUnauthorizedError(err error) bool {
 	return errors.Is(err, errUnauthorized)
 }
 
+// allowedOrigins lists the origins that are permitted to make credentialed
+// cross-origin requests. Adjust for staging/production as needed.
+var allowedOrigins = map[string]bool{
+	"http://localhost:3000":  true,
+	"http://127.0.0.1:3000": true,
+	"http://localhost:5173":  true, // Vite dev server
+	"http://127.0.0.1:5173": true,
+}
+
 func withCORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		origin := r.Header.Get("Origin")
-		if origin == "" {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-		} else {
+		origin := strings.TrimSpace(r.Header.Get("Origin"))
+		if origin != "" && allowedOrigins[origin] {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 			w.Header().Set("Vary", "Origin")
 			w.Header().Set("Access-Control-Allow-Credentials", "true")
@@ -156,6 +232,16 @@ func withCORS(next http.Handler) http.Handler {
 			return
 		}
 
+		next.ServeHTTP(w, r)
+	})
+}
+
+func withSecurityHeaders(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("X-Frame-Options", "DENY")
+		w.Header().Set("X-XSS-Protection", "1; mode=block")
+		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
 		next.ServeHTTP(w, r)
 	})
 }
